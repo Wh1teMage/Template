@@ -1,6 +1,8 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerScriptService = game:GetService("ServerScriptService")
 
+local Events = require(ServerScriptService.Events)
 local charm = require(ReplicatedStorage.Packages.charm)
 local charm_sync = require(ReplicatedStorage.Packages["charm-sync"])
 local test = require(ReplicatedStorage.Utilities.Replica.atoms)
@@ -26,8 +28,8 @@ end)
 
 task.spawn(function()
     while (task.wait(2)) do
-        test.hi({
-            test = math.random(0,100)
+        test.PlayerAtom({
+            num = math.random(0,100)
         })
     end
 end)

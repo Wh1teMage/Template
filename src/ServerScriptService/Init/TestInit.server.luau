@@ -7,6 +7,7 @@ local ConditionNode = require(ReplicatedStorage.Nodes.ControlNode.ConditionNode)
 local Sequence = require(ReplicatedStorage.Nodes.ControlNode.Sequence)
 local server = require(ReplicatedStorage.Utilities.Replica.server)
 local Signal = require(ReplicatedStorage.Utilities.Signal)
+local Serializer = require(ReplicatedStorage.Utilities.Signal.Serializer)
 
 local Registry = require(ServerScriptService.Container.Registry)
 
@@ -30,3 +31,6 @@ Signal:GetBindable('Test'):Connect('test', function(...: any)
 end)
 
 Signal:GetBindable('Test'):Fire('test', 'hi', 'hello')
+
+local data = Serializer:Serialize({['test'] = 123})
+print(buffer.len(data), Serializer:Deserialize(data))
