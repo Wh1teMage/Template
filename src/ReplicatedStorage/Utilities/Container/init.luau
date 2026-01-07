@@ -1,6 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local ContainerTypes = require(script.ContainerTypes)
+local ContainerTypes = require(script.types)
 
 local Container = {}
 Container.__index = Container

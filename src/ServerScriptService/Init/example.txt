@@ -1,0 +1,87 @@
+local ChargedSlash = Ability.define({
+    name = "ChargedSlash",
+
+    config = {
+        KeyCode = Enum.KeyCode.E,
+        Cooldown = 2.5,
+        ChargeTime = 0.6,
+        PerfectWindow = { start = 0.45, finish = 0.55 },
+    },
+
+    events = {
+
+        -- === START ===
+        [AbilityEvent.Start] = Sequence({
+
+            CheckBlackList({ "CanAttack" }),
+            SetAbilityActive(true),
+            SetStatusEffect("Charging", true),
+
+            PlayAnimation("ChargeStart"),
+
+            -- окно perfect timing
+            WithScope("ChargeWindow", Sequence({
+
+                WaitUntil(PerfectTiming({
+                    start = 0.45,
+                    finish = 0.55,
+                }))
+                :as("PerfectTiming"),
+
+                OnEvent("InputReleased", Sequence({
+                    If(FromScope("PerfectTiming"))
+                        :Then(EmitEvent("PerfectRelease"))
+                        :Else(EmitEvent("NormalRelease")),
+                })),
+            })),
+        }),
+
+        -- === PERFECT RELEASE ===
+        ["PerfectRelease"] = Sequence({
+
+            ClearStatus("Charging"),
+            PlayAnimation("Slash_Perfect"),
+
+            Parallel({
+
+                -- подписка на попадание
+                WithScope("HitWindow", OnEvent("Hit", Sequence({
+                    DealDamage({ multiplier = 2.0 }),
+                    PlayVFX("PerfectHit"),
+                }))),
+
+                ApplyForwardImpulse({ power = 40 }),
+            }),
+
+            EndAbility(),
+        }),
+
+        -- === NORMAL RELEASE ===
+        ["NormalRelease"] = Sequence({
+
+            ClearStatus("Charging"),
+            PlayAnimation("Slash_Normal"),
+
+            WithScope("HitWindow", OnEvent("Hit", Sequence({
+                DealDamage({ multiplier = 1.0 }),
+            }))),
+
+            EndAbility(),
+        }),
+
+        -- === INTERRUPT ===
+        [AbilityEvent.Interrupted] = Sequence({
+
+            CancelAllScopes(),
+            ClearStatus("Charging"),
+            PlayVFX("Interrupt"),
+            SetAbilityActive(false),
+        }),
+
+        -- === STOP ===
+        [AbilityEvent.Stop] = Sequence({
+            ClearStatus("Charging"),
+            SetAbilityActive(false),
+        }),
+    }
+})
