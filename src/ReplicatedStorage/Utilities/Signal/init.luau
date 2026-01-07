@@ -87,16 +87,19 @@ local fireTable = {
     [Enums.EventType.Remote] = function(self: event, scope: string, ...)
         assert(self.Instance, 'GlobalEvent doesnt exist!')
 
-        local args = {...}
-        if (typeof(args[1]) ~= 'Player') then 
-            warn(`Player wasnt specified!`)
-            return
-        end
-
         if (RunService:IsClient()) then
             self.Instance:FireServer(self.Name, scope, ...)
         else
-            self.Instance:FireClient(args[1] :: Player, self.Name, scope, ...)
+            local args = {...}
+            if (typeof(args[1]) ~= 'Instance') then 
+                warn(`Player wasnt specified!`)
+                return
+            end
+
+            local player = args[1] :: Player
+            table.remove(args, 1)
+
+            self.Instance:FireClient(player, self.Name, scope, table.unpack(args))
         end
     end
 }

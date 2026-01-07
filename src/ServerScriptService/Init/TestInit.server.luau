@@ -5,6 +5,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local PrintNode = require(ReplicatedStorage.Nodes.ActionNode.Overall.PrintNode)
 local ConditionNode = require(ReplicatedStorage.Nodes.ControlNode.ConditionNode)
 local Sequence = require(ReplicatedStorage.Nodes.ControlNode.Sequence)
+local server = require(ReplicatedStorage.Utilities.Replica.server)
 local Signal = require(ReplicatedStorage.Utilities.Signal)
 
 local Registry = require(ServerScriptService.Container.Registry)
