@@ -7,6 +7,8 @@ local types = require(ReplicatedStorage.Utilities.Blueprint.types)
 -- this file exists purely as a measure to counter changing paths
 
 export type Node = Node.Node
+export type concatTables<T,F> = types.concatTables<T,F>
+export type construct<T,F,G=any> = types.construct<T,F,G>
 
 return {
     ['Node'] = Node,

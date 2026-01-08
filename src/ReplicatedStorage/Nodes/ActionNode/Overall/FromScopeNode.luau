@@ -2,15 +2,15 @@ local entryPoint = require(script.Parent.Parent.Parent.entryPoint)
 local Wrapper = entryPoint.Wrapper
 local controlNode = require(script.Parent.Parent)
 
-export type Node = {
-    ['new']: (scope: string) -> Node,
+export type Node = entryPoint.construct<{
+    ['new']: (scope: string) -> entryPoint.Node,
     scope: string
-} & controlNode.Node
+}, controlNode.Node, (scope: string) -> any>
 
 local node = {} :: Node
 
 function node.new(scope: string)
-    local self = setmetatable(controlNode.new(), node) :: any
+    local self = setmetatable(controlNode(), node) :: any
 
     self.scope = scope
 

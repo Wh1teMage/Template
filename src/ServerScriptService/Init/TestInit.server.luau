@@ -18,7 +18,7 @@ local container = Registry()
 
 local ability = Sequence{
     PrintNode('123'),
-    PrintNode('869')
+    PrintNode('123'),
 }
 
 ability.context = {

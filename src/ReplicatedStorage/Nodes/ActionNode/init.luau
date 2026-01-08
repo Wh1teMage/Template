@@ -2,14 +2,14 @@ local entryPoint = require(script.Parent.entryPoint)
 local ParentNode = entryPoint.Node
 local Wrapper = entryPoint.Wrapper
 
-export type Node = {
+export type Node = entryPoint.construct<{
     context: {[any]: any}
-} & entryPoint.Node
+}, entryPoint.Node, () -> any>
 
 local node = {} :: Node
 
 function node.new()
-    local self = setmetatable(ParentNode.new(), node) :: any
+    local self = setmetatable(ParentNode(), node) :: any
 
     self.context = nil
 

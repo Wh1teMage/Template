@@ -29,7 +29,7 @@ pesde = "^0.7.0"
 lune = "^0.10.2"
 
 [dependencies]
-charm = { wally = "littensy/charm", version = "0.10.0" }
-charm-sync = { wally = "littensy/charm-sync", version = "0.3.0" }
-profilestore = { wally = "lm-loleris/profilestore", version = "^1.0.3" }
-spring = {wally = "nightcycle/spring",version = "^1.0.0"}
+charm-sync = { wally = "littensy/charm-sync", version = "^0.3.0" }
+charm = { wally = "littensy/charm", version = "^0.10.0" }
+lyra = { wally = "paradoxum-games/lyra", version = "^0.6.0" }
+spring = { wally = "nightcycle/spring",version = "^1.0.0" }

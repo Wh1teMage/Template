@@ -4,10 +4,13 @@ local Enums = require(ReplicatedStorage.Info.Enums)
 local Wrapper = require(script.Parent.Wrapper)
 local types = require(script.Parent.types)
 
-export type Node = {
-    ['new']: () -> Node,
-} & types.Node 
+--[[
+export type Node = types.concatTables<{
+    ['new']: () -> types.Node,
+}, types.Node>
+]]
 
+export type Node = types.construct<{}, types.Node, (any) -> any>
 
 local node = {} :: Node
 

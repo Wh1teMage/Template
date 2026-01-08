@@ -8,7 +8,7 @@ local controlNode = require(script.Parent)
 local node = {} :: controlNode.Node
 
 function node.new(children)
-    local self = setmetatable(controlNode.new(children), node) :: any
+    local self = setmetatable(controlNode(children), node) :: any
 
     return self :: controlNode.Node
 end

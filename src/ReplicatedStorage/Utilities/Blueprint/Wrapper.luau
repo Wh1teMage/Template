@@ -18,7 +18,8 @@ end
 
 return setmetatable(wrapper, {
     __call = function<T>(_, origin: T, parent: any?)
-        return (wrapper.new(origin, parent) :: any) :: setmetatable<T, { __call: types.callConvert<index<T, 'new'>> }>
+        return (wrapper.new(origin, parent) :: any) :: index<T, 'new'>
+        -- setmetatable<T, { __call: types.callConvert<index<T, 'new'>> }>
         --types.callConvert<index<T, 'new'>>
         --setmetatable<T & class, { __call: types.callConvert<index<T, 'new'>> }>
         --setmetatable<{}, { __call: (_:any, param: string) -> any }>   --index<T, 'new'>

@@ -2,19 +2,18 @@ local entryPoint = require(script.Parent.entryPoint)
 local ParentNode = entryPoint.Node
 local Wrapper = entryPoint.Wrapper
 
-export type Node =  {
+export type Node = entryPoint.construct<{
     children: {entryPoint.Node},
-    ['new']: (children: {any}) -> Node
-} & entryPoint.Node
+}, entryPoint.Node, (children: {any}) -> any>
 
 local node = {} :: Node
 
 function node.new(children)
-    local self = setmetatable(ParentNode.new(), node) :: any
+    local self = setmetatable(ParentNode(), node) :: any
     
     self.children = children
 
-    return self :: Node
+    return self
 end
 
 function node._onCancel(self: Node)

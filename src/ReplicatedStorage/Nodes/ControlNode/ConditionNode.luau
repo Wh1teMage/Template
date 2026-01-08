@@ -2,23 +2,28 @@ local entryPoint = require(script.Parent.Parent.entryPoint)
 local Wrapper = entryPoint.Wrapper
 local controlNode = require(script.Parent)
 
-local node = {} :: ConditionNode
+local node = {} :: Node
 
-export type ConditionNode = controlNode.Node & {
-    thenNode: controlNode.Node?,
-    elseNode: controlNode.Node?,
+export type Node = entryPoint.construct<{
+    thenNode: entryPoint.Node?,
+    elseNode: entryPoint.Node?,
 
-    Then: (self: ConditionNode, child: controlNode.Node) -> ConditionNode,
-    Else: (self: ConditionNode, child: controlNode.Node) -> ConditionNode,
-}
+    Then: (self: any, child: any) -> {
+        Else: (self: any, child: any) -> nil
+    },
+    Else: (self: any, child: any) -> {
+        Then: (self: any, child: any) -> nil
+    },
+}, controlNode.Node, (children: {any}) -> any>
+
 
 function node.new(children)
-    local self = setmetatable(controlNode.new(children), {__index = node}) :: any
+    local self = setmetatable(controlNode(children), {__index = node}) :: any
 
-    return self :: ConditionNode
+    return self
 end
 
-function node._onStart(self: ConditionNode)
+function node._onStart(self: Node)
     local result = true
 
     for _, child in ipairs(self.children) do
@@ -39,14 +44,14 @@ function node._onStart(self: ConditionNode)
     end
 end
 
-function node.Then(self: ConditionNode, child: controlNode.Node)
+function node.Then(self: Node, child: entryPoint.Node)
     self.thenNode = child
-    return self
+    return self :: any
 end
 
-function node.Else(self: ConditionNode, child: controlNode.Node)
+function node.Else(self: Node, child: entryPoint.Node)
     self.elseNode = child
-    return self
+    return self :: any
 end
 
 return Wrapper(node, controlNode) 
