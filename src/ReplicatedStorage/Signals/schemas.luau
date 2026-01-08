@@ -13,8 +13,13 @@ export type Test = {
     ['message']: string
 }
 
+--@schema-bindable-server
+export type Test123 = {
+    ['message']: any
+}
+
 --@schema-remote
-export type Test2 = {
+export type Test3 = {
     ['message']: string
 }
 

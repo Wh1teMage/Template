@@ -24,5 +24,11 @@ return function()
         end
     end
 
+    for _, assembly in pairs(assemblies) do
+        for name, class in pairs(assembly) do
+            container:Inject(class)
+        end
+    end
+
     return container
 end

@@ -1,3 +1,6 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Enums = require(ReplicatedStorage.Info.Enums)
 export type function filterModuleTypes(modules: type, array: type): type  
     local result = types.newtable()
 
@@ -26,9 +29,10 @@ export type function filterModuleTypes(modules: type, array: type): type
 end
 
 export type InjectedClass<T=any, F=any> = {
+    Name: string?,
     Inject: T,
     Dependencies: F,
-    Scope: string?,
+    Scope: keyof<typeof(Enums.Class)>,
     constructor: (() -> any),
 }
 
@@ -38,5 +42,7 @@ export type Container = {
     Inject: (self: Container, class: InjectedClass<any>) -> (),
     Register: (self: Container, name: string, class: InjectedClass<any>) -> (),
 }
+
+--ITestComponentCopy.Main & types.InjectedClass<typeof(inject), types.filterModuleTypes<Modules.Types, typeof(inject)>>
 
 return {}

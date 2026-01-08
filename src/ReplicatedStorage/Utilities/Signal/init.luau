@@ -3,6 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local Enums = require(ReplicatedStorage.Info.Enums)
+local Serializer = require(script.Serializer)
 
 local signal = {}
 signal.__index = signal
@@ -28,15 +29,15 @@ local function connectRemote(remote: RemoteEvent)
 
     if RunService:IsClient() then
         remote.OnClientEvent:Connect(function(name: string, ...)
-            triggerRemote(name, ...)
+            triggerRemote(name, Serializer:Deserialize(...))
         end)
     else
         remote.OnServerEvent:Connect(function(player: Player, name: string,  ...)
-            triggerRemote(name, player, ...)
+            triggerRemote(name, player, Serializer:Deserialize(...))
         end)
     end
 
-    print(`--- {RunService:IsClient() and 'Client' or 'Server'} {remote} remote registered successfully! ---`)
+    warn(`--- {RunService:IsClient() and 'Client' or 'Server'} {remote} remote registered successfully! ---`)
     registeredRemotes[remote] = true
 end
 
@@ -69,7 +70,7 @@ local fireTable = {
         assert(self.Instance, 'GlobalEvent doesnt exist!')
 
         if (RunService:IsClient()) then
-            self.Instance:FireServer(self.Name, ...)
+            self.Instance:FireServer(self.Name, Serializer:Serialize(...))
         else
             local args = {...}
             if (typeof(args[1]) ~= 'Instance') then 
@@ -80,7 +81,7 @@ local fireTable = {
             local player = args[1] :: Player
             table.remove(args, 1)
 
-            self.Instance:FireClient(player, self.Name, table.unpack(args))
+            self.Instance:FireClient(player, self.Name, Serializer:Serialize(table.unpack(args)))
         end
     end
 }

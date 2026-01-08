@@ -2,16 +2,16 @@
 -- run with: lune gen.lua
 
 local fs = require("@lune/fs")
-local path = require("@lune/path")
+local task = require("@lune/task")
 
 --------------------------------------------------
 -- Paths
 --------------------------------------------------
 
 
-local SCHEMAS_FILE = '/src/ReplicatedStorage/Signals/schemas.luau'
-local OUT_CLIENT = '/src/ReplicatedStorage/Signals/init.luau'
-local OUT_SERVER = '/src/ServerScriptService/Signals/init.luau'
+local SCHEMAS_FILE = './src/ReplicatedStorage/Signals/schemas.luau'
+local OUT_CLIENT = './src/ReplicatedStorage/Signals/init.luau'
+local OUT_SERVER = './src/ServerScriptService/Signals/init.luau'
 
 --------------------------------------------------
 -- Read schemas.lua
@@ -128,7 +128,9 @@ local function generateFile(header, generators)
     local lines = table.clone(header)
 
     for _, schema in ipairs(schemas) do
-        local gen = generators[schema.kind]
+        local kind: string = (schema :: any).kind :: any
+
+        local gen = generators[kind]
         if gen then
             table.insert(lines, gen(schema))
         end
@@ -139,10 +141,59 @@ local function generateFile(header, generators)
 end
 
 --------------------------------------------------
--- Write output
+-- Simple file hash function
 --------------------------------------------------
 
-fs.writeFile(OUT_CLIENT, generateFile(CLIENT_HEADER, clientGenerators))
-fs.writeFile(OUT_SERVER, generateFile(SERVER_HEADER, serverGenerators))
+local lastHash = nil
 
-print("Signals generated successfully")
+local function hashFile(filePath): number?
+    local content = fs.readFile(filePath)
+    if not content then return nil end
+
+    local sum = 0
+    for i = 1, #content do
+        sum = (sum + content:byte(i)) % 0xFFFFFFFF
+    end
+
+    return sum
+end
+
+--------------------------------------------------
+-- Main watcher loop
+--------------------------------------------------
+
+print("Watching " .. SCHEMAS_FILE .. " for changes...")
+
+while task.wait(2) do
+    local currentHash = hashFile(SCHEMAS_FILE)
+
+    if (not currentHash or currentHash == lastHash) then continue end
+
+    source = fs.readFile(SCHEMAS_FILE)
+
+    table.clear(schemas)
+
+    for annotation, name in source:gmatch(
+        "%-%-@schema%-(%S+)%s*export%s+type%s+(%w+)"
+    ) do
+        table.insert(schemas, {
+            name = name,
+            kind = annotation,
+        })
+    end
+
+    print("Change detected in schemas.luau — regenerating signals...")
+    local success = pcall(function()
+        fs.writeFile(OUT_CLIENT, generateFile(CLIENT_HEADER, clientGenerators))
+        fs.writeFile(OUT_SERVER, generateFile(SERVER_HEADER, serverGenerators))
+    end)
+
+    if success then
+        print("Signals regenerated successfully")
+    else
+        print("Error during generation")
+    end
+
+    lastHash = currentHash
+    
+end

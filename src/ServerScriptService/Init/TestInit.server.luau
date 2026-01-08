@@ -14,7 +14,7 @@ local Signals = require(ServerScriptService.Signals)
 
 local container = Registry()
 
-print(container.Elements)
+--print(container.Elements)
 
 local ability = Sequence{
     PrintNode('123'),
@@ -33,9 +33,11 @@ end)
 
 Signals.Test:Fire({message = 'hi'})
 
-Signals.Test2:Connect(function(player: Player, payload)
-    print(payload, 'recieved')
-end)
+--local data = Serializer:Serialize({['test'] = 123})
+--print(buffer.len(data), Serializer:Deserialize(data))
 
-local data = Serializer:Serialize({['test'] = 123})
-print(buffer.len(data), Serializer:Deserialize(data))
+local TestComponentCopy = require(ServerScriptService.Components.TestComponentCopy)
+
+--print(TestComponentCopy)
+
+TestComponentCopy:test()
