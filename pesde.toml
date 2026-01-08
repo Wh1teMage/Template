@@ -14,6 +14,7 @@ default = "https://github.com/UpliftGames/wally-index"
 [scripts]
 roblox_sync_config_generator = ".pesde/scripts/roblox_sync_config_generator.luau"
 sourcemap_generator = ".pesde/scripts/sourcemap_generator.luau"
+generate_signals = ".scripts/generate_signals.luau"
 
 [dev_dependencies]
 scripts = { name = "pesde/scripts_rojo", version = "^0.2.0", target = "lune" }
@@ -22,7 +23,6 @@ selene = { name = "pesde/selene", version = "^0.29.0", target = "lune" }
 stylua = { name = "pesde/stylua", version = "^2.3.0", target = "lune" }
 rojo = { name = "pesde/rojo", version = "^7.5.1", target = "lune" }
 zap = { name = "pesde/zap", version = "^0.6.28", target = "lune" }
-
 
 [engines]
 pesde = "^0.7.0"
@@ -33,4 +33,3 @@ charm = { wally = "littensy/charm", version = "0.10.0" }
 charm-sync = { wally = "littensy/charm-sync", version = "0.3.0" }
 profilestore = { wally = "lm-loleris/profilestore", version = "^1.0.3" }
 spring = {wally = "nightcycle/spring",version = "^1.0.0"}
-

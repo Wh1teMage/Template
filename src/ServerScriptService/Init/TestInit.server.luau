@@ -10,6 +10,7 @@ local Signal = require(ReplicatedStorage.Utilities.Signal)
 local Serializer = require(ReplicatedStorage.Utilities.Signal.Serializer)
 
 local Registry = require(ServerScriptService.Container.Registry)
+local Signals = require(ServerScriptService.Signals)
 
 local container = Registry()
 
@@ -26,11 +27,15 @@ ability.context = {
 
 ability:start()
 
-Signal:GetBindable('Test'):Connect('test', function(...: any)
-    print(...)
+Signals.Test:Connect(function(payload)
+    print(payload)
 end)
 
-Signal:GetBindable('Test'):Fire('test', 'hi', 'hello')
+Signals.Test:Fire({message = 'hi'})
+
+Signals.Test2:Connect(function(player: Player, payload)
+    print(payload, 'recieved')
+end)
 
 local data = Serializer:Serialize({['test'] = 123})
 print(buffer.len(data), Serializer:Deserialize(data))

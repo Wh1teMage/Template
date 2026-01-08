@@ -52,7 +52,7 @@ end
 function scope:Fire(payload)
     -- IDE теперь понимает payload как T
     for _, callback in pairs(self.Connections) do
-        callback(payload)
+        --callback(payload)
     end
 end
 
@@ -67,7 +67,7 @@ local schema = {
     count = 1
 }
 
--- @schema
+-- @schema-server-bindable
 type TestPayload = typeof(schema)
 
 -- Создаём scope с payload типа TestPayload

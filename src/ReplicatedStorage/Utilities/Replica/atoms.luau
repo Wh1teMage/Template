@@ -2,16 +2,11 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local charm = require(ReplicatedStorage.Packages.charm)
 
-local testAtom = charm.atom({
+local data = {
     ['num'] = 123,
-})
+}
 
---[[
-            PlayerAtom: struct {
-                State: unknown,
-                Data: unknown
-            }
-]]
+local testAtom: charm.Atom<typeof(data)> = charm.atom(data)
 
 local bar = {
     PlayerAtom = testAtom,
