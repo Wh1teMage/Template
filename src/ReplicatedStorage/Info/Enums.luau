@@ -1,5 +1,6 @@
 return {
     Class = {
+        ['Service'] = 'Service' :: 'Service',
         ['Singleton'] = 'Singleton' :: 'Singleton' ,
         ['Prototype'] = 'Prototype' :: 'Prototype',
     },

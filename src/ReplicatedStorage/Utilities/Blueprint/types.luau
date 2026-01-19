@@ -1,7 +1,3 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local Enums = require(ReplicatedStorage.Info.Enums)
-
 export type class = {['__index']: any, ['new']: (...any) -> any}
 
 export type function callConvert(constructor: type): type
@@ -24,7 +20,7 @@ export type function callConvert(constructor: type): type
 end
 
 export type function concatTables(t1: type, t2: type): type 
-    if (not t1:is('table')) then error() end
+    if (not t1:is('table')) then error(`{t1} isnt a table`) end
 
     local t3 = types.newtable()
 
@@ -40,18 +36,9 @@ export type function concatTables(t1: type, t2: type): type
 end
 
 export type function construct(t1: type, t2: type, f1: type?): type 
-    if (not t1:is('table')) then error() end
+    if (not t1:is('table')) then error(`{t1} isnt a table`) end
 
-    local t3 = types.newtable()
-
-    for name, type in pairs(t1:properties()) do
-        t3:setproperty(name, type.read)
-    end
-
-    for name, type in pairs(t2:properties()) do
-        t3:setproperty(name, type.read)
-    end
-
+    local t3 = concatTables(t1, t2) :: type
     if (not f1 or f1:is('any')) then 
         return t3 
     end

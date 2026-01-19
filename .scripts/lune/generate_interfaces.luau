@@ -3,6 +3,7 @@
 
 local fs = require("@lune/fs")
 local task = require("@lune/task")
+local config = require('./config')
 
 --------------------------------------------------
 -- Paths
@@ -11,12 +12,13 @@ local task = require("@lune/task")
 --local OUT_FILE = path.join(ROOT, "Modules.lua")
 
 -- path: hash
-local modules = { 
-    ['./src/ServerScriptService/Interfaces/Modules.luau'] = 123,
-    ['./src/ReplicatedStorage/Interfaces/Modules.luau'] = 123,
-} :: {
+local modules = {} :: {
     [string]: number
 }
+
+for _, modulePath in ipairs(config.INTERFACE_MODULES) do
+    modules[modulePath] = 42
+end
 
 --------------------------------------------------
 -- Utilities

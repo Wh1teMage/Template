@@ -1,6 +1,5 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local Enums = require(ReplicatedStorage.Info.Enums)
+local Enums = require("@Info/Enums")
+local gt = require("@Packages/greentea")
 
 export type Event = {
     -- fields
@@ -10,6 +9,7 @@ export type Event = {
     WaitConnections: {[string]: {(...any) -> any}},
     OnceConnections: {[string]: {(...any) -> any}},
     Type: keyof<typeof(Enums.EventType)>,
+    Validator: gt.Type?,
 
     -- methods
     Fire: (self: Event, scope: string, ...any) -> (),
@@ -17,23 +17,6 @@ export type Event = {
     FireInRadius: (self: Event) -> (), -- placeholder, as in implementation
     Connect: (self: Event, scope: string, callback: (...any) -> any) -> (),
 }
---[[
-type ScopeBase = {
-    Name: string,
-    Type: keyof<typeof(Enums.EventType)>,
-}
-
-export type RequestScope<T> = {
-    Fire: (self: RequestScope<T>, payload: T) -> (),
-    FireAll: (self: RequestScope<T>, payload: T) -> (),
-    FireInRadius: (self: RequestScope<T>) -> (), -- tb implemented
-} & ScopeBase
-
-export type RecieveScope<T> = {
-    Connections: {(payload: T) -> any},
-    Connect: (self: RecieveScope<T>, callback: (payload: T) -> any) -> (),
-} & ScopeBase
-]]
 
 export type BindableScope<T> = {
     Name: string,

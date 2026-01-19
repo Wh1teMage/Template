@@ -2,14 +2,11 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local gt = require('@Packages/greentea')
 local schemas = require(ReplicatedStorage.Signals.schemas)
 local Signal = require(ReplicatedStorage.Utilities.Signal)
 local types = require(ReplicatedStorage.Utilities.Signal.types)
 
 return {
-    Sync = Signal:CreateRemote('Sync') :: types.ServerScope<schemas.Sync>,
-    Hydrate = Signal:CreateRemote('Hydrate') :: types.ServerScope<schemas.Hydrate>,
-    Test = Signal:CreateBindable('Test') :: types.BindableScope<schemas.Test>,
-    Test123 = Signal:CreateBindable('Test123') :: types.BindableScope<schemas.Test123>,
-    Test3 = Signal:CreateRemote('Test3') :: types.ServerScope<schemas.Test3>,
+    Test3 = Signal:CreateRemote('Test3', gt.typecast(schemas.Test3)) :: types.ServerScope<typeof(schemas.Test3)>,
 }

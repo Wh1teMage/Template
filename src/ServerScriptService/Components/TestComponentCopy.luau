@@ -1,10 +1,5 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ServerScriptService = game:GetService("ServerScriptService")
-
-local Enums = require(ReplicatedStorage.Info.Enums)
-
-local ITestComponentCopy = require(ServerScriptService.Interfaces.ITestComponentCopy)
-local Modules = require(ServerScriptService.Interfaces.Modules)
+local ITestComponentCopy = require('@ServerInterfaces/ITestComponentCopy')
+local Modules = require('@ServerInterfaces/Modules')
 
 local inject = {
     Modules.TestComponent

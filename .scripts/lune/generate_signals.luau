@@ -3,15 +3,16 @@
 
 local fs = require("@lune/fs")
 local task = require("@lune/task")
+local config = require('./config')
 
 --------------------------------------------------
 -- Paths
 --------------------------------------------------
 
 
-local SCHEMAS_FILE = './src/ReplicatedStorage/Signals/schemas.luau'
-local OUT_CLIENT = './src/ReplicatedStorage/Signals/init.luau'
-local OUT_SERVER = './src/ServerScriptService/Signals/init.luau'
+local SCHEMAS_FILE = config.SCHEMAS_FILE
+local OUT_CLIENT = config.OUT_SINGALS_CLIENT
+local OUT_SERVER = config.OUT_SINGALS_SERVER
 
 --------------------------------------------------
 -- Read schemas.lua
@@ -36,7 +37,7 @@ local schemas = {}
 --  - .-  => non-greedy
 
 for annotation, name in source:gmatch(
-    "%-%-@schema%-(%S+)%s*export%s+type%s+(%w+)"
+    "%-%-@schema%-(%S+)%s*schemas%[%s*['\"](%w+)['\"]%s*%]"
 ) do
     table.insert(schemas, {
         name = name,
@@ -51,7 +52,8 @@ end
 local clientGenerators = {
     remote = function(schema)
         return string.format(
-            "    %s = Signal:CreateRemote('%s') :: types.ClientScope<schemas.%s>,",
+            "    %s = Signal:CreateRemote('%s', gt.typecast(schemas.%s)) :: types.ClientScope<typeof(schemas.%s)>,",
+            schema.name,
             schema.name,
             schema.name,
             schema.name
@@ -60,7 +62,8 @@ local clientGenerators = {
 
     ["bindable-client"] = function(schema)
         return string.format(
-            "    %s = Signal:CreateBindable('%s') :: types.BindableScope<schemas.%s>,",
+            "    %s = Signal:CreateBindable('%s', gt.typecast(schemas.%s)) :: types.BindableScope<typeof(schemas.%s)>,",
+            schema.name,
             schema.name,
             schema.name,
             schema.name
@@ -75,7 +78,8 @@ local clientGenerators = {
 local serverGenerators = {
     remote = function(schema)
         return string.format(
-            "    %s = Signal:CreateRemote('%s') :: types.ServerScope<schemas.%s>,",
+            "    %s = Signal:CreateRemote('%s', gt.typecast(schemas.%s)) :: types.ServerScope<typeof(schemas.%s)>,",
+            schema.name,
             schema.name,
             schema.name,
             schema.name
@@ -84,7 +88,8 @@ local serverGenerators = {
 
     ["bindable-server"] = function(schema)
         return string.format(
-            "    %s = Signal:CreateBindable('%s') :: types.BindableScope<schemas.%s>,",
+            "    %s = Signal:CreateBindable('%s', gt.typecast(schemas.%s)) :: types.BindableScope<typeof(schemas.%s)>,",
+            schema.name,
             schema.name,
             schema.name,
             schema.name
@@ -101,6 +106,7 @@ local CLIENT_HEADER = {
     "",
     "local ReplicatedStorage = game:GetService(\"ReplicatedStorage\")",
     "",
+    "local gt = require('@Packages/greentea')",
     "local Signal = require(ReplicatedStorage.Utilities.Signal)",
     "local types = require(ReplicatedStorage.Utilities.Signal.types)",
     "local schemas = require(script.schemas)",
@@ -113,6 +119,7 @@ local SERVER_HEADER = {
     "",
     "local ReplicatedStorage = game:GetService(\"ReplicatedStorage\")",
     "",
+    "local gt = require('@Packages/greentea')",
     "local schemas = require(ReplicatedStorage.Signals.schemas)",
     "local Signal = require(ReplicatedStorage.Utilities.Signal)",
     "local types = require(ReplicatedStorage.Utilities.Signal.types)",
@@ -124,13 +131,13 @@ local SERVER_HEADER = {
 -- Generation helpers
 --------------------------------------------------
 
-local function generateFile(header, generators)
+local function generateFile(header: {string}, generators)
     local lines = table.clone(header)
 
     for _, schema in ipairs(schemas) do
         local kind: string = (schema :: any).kind :: any
 
-        local gen = generators[kind]
+        local gen = generators[kind] :: ((any) -> string)?
         if gen then
             table.insert(lines, gen(schema))
         end
@@ -174,7 +181,7 @@ while task.wait(2) do
     table.clear(schemas)
 
     for annotation, name in source:gmatch(
-        "%-%-@schema%-(%S+)%s*export%s+type%s+(%w+)"
+        "%-%-@schema%-(%S+)%s*schemas%[%s*['\"](%w+)['\"]%s*%]"
     ) do
         table.insert(schemas, {
             name = name,

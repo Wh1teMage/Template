@@ -171,7 +171,7 @@ readers[T.TABLE] = function(buf, o)
 end
 
 function serializer._writeAny(buf, o, v)
-    local w = writers[typeof(v)]
+    local w = writers[typeof(v)] :: ((...any) -> any)?
     if not w then
         warn(`Serializer: unsupported type {typeof(v)}`)
         return buf, o
@@ -181,7 +181,7 @@ end
 
 function serializer._readAny(buf, o)
     local t = buffer.readu8(buf, o)
-    local r = readers[t]
+    local r = readers[t] :: ((...any) -> any)?
     if not r then
         warn(`Deserializer: unknown type {t}`)
         return nil, o + 1

@@ -2,8 +2,10 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
-local Enums = require(ReplicatedStorage.Info.Enums)
-local Serializer = require(script.Serializer)
+
+local Enums = require("@Info/Enums")
+local gt = require("@Packages/greentea")
+local Serializer = require('@self/Serializer')
 
 local signal = {}
 signal.__index = signal
@@ -17,7 +19,9 @@ local registeredRemotes = {}
 
 local function triggerRemote(name: string, ...)
     local event = signals[Enums.EventType.Remote][name] :: any
-    if (not event) then warn(`{name} remote isnt registered but the instance already exists!`); return end
+    if (not event) then warn(`{name} remote isnt registered but the instance already triggered!`); return end
+
+    event.Validator:assert(RunService:IsClient() and ... or table.unpack({...}, 2))
 
     for _, connection in pairs(event.Connections) do
         connection(...)
@@ -33,7 +37,7 @@ local function connectRemote(remote: RemoteEvent)
         end)
     else
         remote.OnServerEvent:Connect(function(player: Player, name: string,  ...)
-            triggerRemote(name, player, Serializer:Deserialize(...))
+            triggerRemote(name,  player, Serializer:Deserialize(...))
         end)
     end
 
@@ -86,12 +90,13 @@ local fireTable = {
     end
 }
 
-function signal:CreateBindable(name: string)
+function signal:CreateBindable(name: string, validator: gt.Type?)
     if (signals[Enums.EventType.Bindable][name]) then return signals[Enums.EventType.Bindable][name] end
     local event = setmetatable({
         Name = name,
         Connections = {},
-        Type = Enums.EventType.Bindable
+        Type = Enums.EventType.Bindable,
+        Validator = validator
     }, signal)
 
     signals[event.Type][name] = event
@@ -99,12 +104,13 @@ function signal:CreateBindable(name: string)
     return event
 end
 
-function signal:CreateRemote(name: string)
+function signal:CreateRemote(name: string, validator: gt.Type?)
     if (signals[Enums.EventType.Remote][name]) then return signals[Enums.EventType.Remote][name] end
     local event = setmetatable({
         Name = name,
         Connections = {},
-        Type = Enums.EventType.Remote
+        Type = Enums.EventType.Remote,
+        Validator = validator
     }, signal)
 
     local instance = script:FindFirstChild(name)
@@ -148,6 +154,7 @@ function signal.Connect(self: any, callback: (...any) -> any)
 end
 
 function signal.Fire(self: any, ...)
+    self.Validator:assert(...)
     fireTable[self.Type](self, ...)
 end
 

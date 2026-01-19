@@ -14,8 +14,8 @@ default = "https://github.com/UpliftGames/wally-index"
 [scripts]
 roblox_sync_config_generator = ".pesde/scripts/roblox_sync_config_generator.luau"
 sourcemap_generator = ".pesde/scripts/sourcemap_generator.luau"
-generate_interfaces = ".scripts/generate_interfaces.luau"
-generate_signals = ".scripts/generate_signals.luau"
+generate_interfaces = ".scripts/lune/generate_interfaces.luau"
+generate_signals = ".scripts/lune/generate_signals.luau"
 
 [dev_dependencies]
 scripts = { name = "pesde/scripts_rojo", version = "^0.2.0", target = "lune" }
@@ -31,5 +31,9 @@ lune = "^0.10.2"
 [dependencies]
 charm-sync = { wally = "littensy/charm-sync", version = "^0.3.0" }
 charm = { wally = "littensy/charm", version = "^0.10.0" }
+janitor = { wally = "howmanysmall/janitor", version = "^1.18.3" }
+promise = { wally = "howmanysmall/typed-promise", version = "^4.0.6" }
+greentea = { name = "corecii/greentea", version = "^0.4.11" }
+sift = { wally = "csqrl/sift", version = "^0.0.11" }
 lyra = { wally = "paradoxum-games/lyra", version = "^0.6.0" }
 spring = { wally = "nightcycle/spring",version = "^1.0.0" }

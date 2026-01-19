@@ -1,8 +1,8 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Enums = require(ReplicatedStorage.Info.Enums)
-local Wrapper = require(script.Parent.Wrapper)
-local types = require(script.Parent.types)
+local Enums = require("@Info/Enums")
+local Wrapper = require('./Wrapper')
+local types = require('./types')
 
 --[[
 export type Node = types.concatTables<{

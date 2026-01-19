@@ -1,5 +1,5 @@
 local wrapper = {}
-local types = require(script.Parent.types)
+local types = require('./types')
 
 type class = types.class
 

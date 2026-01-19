@@ -1,26 +1,18 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local charm_sync = require("@Packages/charm-sync")
+local gt = require("@Packages/greentea")
 
-local charm_sync = require(ReplicatedStorage.Packages["charm-sync"])
-
---@schema-remote
-export type Sync = charm_sync.SyncPayload
+local schemas = {}
 
 --@schema-remote
-export type Hydrate = nil
+schemas['Test3'] = gt.table({
+    data = gt.string(),
+})
 
---@schema-bindable-server
-export type Test = {
-    ['message']: string
-}
+return schemas
 
---@schema-bindable-server
-export type Test123 = {
-    ['message']: any
-}
+--[[
+Subscribe1(obj (status))
+Subscribe2(obj (status))
 
---@schema-remote
-export type Test3 = {
-    ['message']: string
-}
-
-return {}
+Fire -> EventBus -> for (subscribers) -> Subscribe1 -> obj.status -> cancelled -> break
+]]

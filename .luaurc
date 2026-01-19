@@ -1,6 +1,14 @@
 {
   "languageMode": "strict",
   "aliases": {
-    "lune": "~/.lune/.typedefs/0.10.4/"
+    "lune": "~/.lune/.typedefs/0.10.4/",
+    "ReplicatedStorage": "src/ReplicatedStorage/",
+    "ServerScriptService": "src/ServerScriptService/",
+    "ServerInterfaces": "src/ServerScriptService/Interfaces",
+    "ClientInterfaces": "src/ReplicatedStorage/Interfaces",
+    "Utilities": "src/ReplicatedStorage/Utilities",
+    "Container": "src/ReplicatedStorage/Utilities/Container",
+    "Info": "src/ReplicatedStorage/Info",
+    "Packages": "roblox_packages"
   }
 }
