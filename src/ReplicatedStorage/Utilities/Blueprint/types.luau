@@ -50,8 +50,6 @@ export type function construct(t1: type, t2: type, f1: type?): type
     return t3
 end
 
-
-
 export type NodeMethods = {
     _onStart: (self: any) -> (), 
     _onComplete: (self: any) -> (),

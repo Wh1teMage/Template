@@ -1,20 +1,14 @@
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Atoms = require("@Info/Atoms")
+local charm_sync = require("@Packages/charm-sync")
+local Signals = require("@ReplicatedStorage/Signals")
 
-local charm = require(ReplicatedStorage.Packages.charm)
-local charm_sync = require(ReplicatedStorage.Packages["charm-sync"])
-local Signals = require(ReplicatedStorage.Signals)
-local atoms = require(ReplicatedStorage.Utilities.Replica.atoms)
-local Signal = require(ReplicatedStorage.Utilities.Signal)
+local syncer = charm_sync.client({ atoms = Atoms :: any })
 
-local syncer = charm_sync.client({ atoms = atoms })
-
-Signals.Sync:Connect(function(payload)
-    syncer:sync(payload)
-    print(payload)
+Signals.Sync:Connect(function(...)  
+    print(...)
+    syncer:sync(...)
 end)
 
---Events.RequestState:Fire()
 Signals.Hydrate:Fire()
 
 return {}

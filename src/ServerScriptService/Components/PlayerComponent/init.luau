@@ -1,8 +1,6 @@
-local ServerScriptService = game:GetService("ServerScriptService")
-
 local Enums = require("@Info/Enums")
-local IPlayerComponent = require(ServerScriptService.Interfaces.IPlayerComponent)
-local Modules = require(ServerScriptService.Interfaces.Modules)
+local IPlayerComponent = require('@ServerInterfaces/Classes/IPlayerComponent')
+local Modules = require('@ServerInterfaces/Classes/Modules')
 
 local inject = {
     Modules.TestComponent,

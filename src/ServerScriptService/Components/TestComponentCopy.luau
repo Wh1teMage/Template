@@ -1,5 +1,5 @@
-local ITestComponentCopy = require('@ServerInterfaces/ITestComponentCopy')
-local Modules = require('@ServerInterfaces/Modules')
+local ITestComponentCopy = require('@ServerInterfaces/Classes/ITestComponentCopy')
+local Modules = require('@ServerInterfaces/Classes/Modules')
 
 local inject = {
     Modules.TestComponent

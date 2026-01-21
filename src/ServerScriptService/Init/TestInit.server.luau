@@ -1,6 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
+local ConditionNode = require("@ReplicatedStorage/Nodes/ControlNode/ConditionNode")
 local Container = require("@Utilities/Container")
 local PrintNode = require(ReplicatedStorage.Nodes.ActionNode.Overall.PrintNode)
 local Sequence = require(ReplicatedStorage.Nodes.ControlNode.Sequence)
@@ -35,3 +36,5 @@ local TestComponentCopy = require(ServerScriptService.Components.TestComponentCo
 --print(TestComponentCopy)
 
 TestComponentCopy:test()
+
+local server = require("@Utilities/Replica/server")
