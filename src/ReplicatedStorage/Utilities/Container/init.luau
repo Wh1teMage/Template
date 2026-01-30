@@ -33,6 +33,9 @@ function Container.Inject(self: Container, class: InjectedClass)
         class.Dependencies = {}
     end
 
+    if (not class.constructor) then warn(`{class.Name} must have a constructor!`); return end
+    local object = class.constructor()
+
     for _, moduleName in toBeInjected do
         local module = self.Elements[moduleName]
         if (not module) then
@@ -43,7 +46,7 @@ function Container.Inject(self: Container, class: InjectedClass)
         if (module.Inject and #module.Inject > 0) then self:Inject(module) end
         if (not module.constructor) then warn(`{module.Name} must have a constructor!`); continue end
 
-        class.Dependencies[moduleName] = module.constructor()
+        object.Dependencies[moduleName] = module.constructor()
     end
 end
 

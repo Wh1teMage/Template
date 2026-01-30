@@ -29,6 +29,7 @@ pesde = "^0.7.0"
 lune = "^0.10.2"
 
 [dependencies]
+signal = { wally = "sleitnick/signal", version = "^2.0.3" }
 immut = { wally = "solarhorizon/immut", version = "^0.4.4" }
 charm-sync = { wally = "littensy/charm-sync", version = "^0.4.0-rc.4" }
 charm = { wally = "littensy/charm", version = "^0.11.0-rc.2" }

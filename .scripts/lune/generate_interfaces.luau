@@ -100,10 +100,10 @@ local function generateTypes(interfaces: interfaces)
         table.insert(
             typesLines,
             string.format(
-                "    %s: %s.Main,",
+                "    %s: %s.Main<T>,",
                 iface.public,
                 iface.module
-            )
+            ) 
         )
     end
 
@@ -154,18 +154,36 @@ local function generateFile(file: string)
         "local types = require(ReplicatedStorage.Utilities.Container.types)",
         table.concat(requires, "\n"),
         "",
-        "export type Class<class=any, inject=any> =",
-        "    class & types.InjectedClass<inject, types.filterModuleTypes<Types, inject>>",
-        "",
-        "export type Types = {",
-        table.concat(typesLines, "\n"),
-        "}",
-        "",
-        "return {",
+        "local mapping = {",
         table.concat(returnLines, "\n"),
         "} :: {",
         table.concat(returnTypes, "\n"),
         "}",
+        "",
+        "export type Class<class={Name: string, Inject: {}}, fields={}> =",
+        "    class",
+        "    & fields",
+        "    & types.SatisfiedClass<",
+        "        types.filterModuleTypes<",
+        "            Types,",
+        "            index<class, 'Inject'>",
+        "        >",
+        "    >",
+        "",
+        "export type Validate<class={Name: string, Inject: {}}, generated={}> =",
+        "    types.validateClass<",
+        "        class,",
+        "        index<",
+        "            Types<generated>,",
+        "            index<class, 'Name'>",
+        "        >",
+        "    >",
+        "",
+        "export type Types<T=any> = {",
+        table.concat(typesLines, "\n"),
+        "}",
+        "",
+        "return mapping",
         "",
     }, "\n")
 

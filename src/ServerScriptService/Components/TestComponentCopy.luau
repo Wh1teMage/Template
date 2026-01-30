@@ -1,18 +1,22 @@
-local ITestComponentCopy = require('@ServerInterfaces/Classes/ITestComponentCopy')
 local Modules = require('@ServerInterfaces/Classes/Modules')
 
-local inject = {
+type Fields = {}
+
+local component = {}
+component.Name = Modules.TestComponentCopy
+component.Inject = {
     Modules.TestComponent
 }
 
-local component = {} :: Modules.Class<ITestComponentCopy.Main, typeof(inject)>
-component.Inject = inject
+type Class = Modules.Class<typeof(component), Fields>
 
-function component:test()
-    print(component)
-    component.Dependencies.TestComponent.sayHello()
+function component.hi()
+    
+end
 
+function component.test123(self: Class, num: number)
+    print(self.Dependencies.TestComponent:sayHello())
     return nil
 end
 
-return component
+return component :: Modules.Validate<typeof(component), Class>

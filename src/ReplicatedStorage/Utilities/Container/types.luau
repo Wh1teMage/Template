@@ -27,24 +27,41 @@ export type function filterModuleTypes(modules: type, array: type): type
     return result
 end
 
-export type InjectedClass<T=any, F=any> = {
+export type function validateClass(class: type, interface: type)
+    assert(class:is('table'))
+    assert(interface:is('table'))
+
+    for index, value in interface:properties() do 
+        if (not value.read or not value.read:is('function')) then continue end
+        local propType = class:readproperty(index)
+        if (not propType or value.read ~= propType) then error(`class doesnt satisfy the class interface!`) end
+    end
+
+    return types.newtable()
+end
+
+export type InjectedClass<F=any> = {
     Name: string?,
     Injected: boolean,
     Initialized: boolean,
     Priority: number,
-    Inject: T,
+    Inject: {string},
     Dependencies: F,
     Scope: keyof<typeof(Enums.Class)>,
     constructor: (() -> any)?,
     start: (() -> any)?,
 }
 
+export type SatisfiedClass<T={}> = {
+    Dependencies: T,
+}
+
 export type Container = {
     registered: boolean,
-    Elements: { [string]: InjectedClass<any> }, -- {string}?
+    Elements: { [string]: InjectedClass }, -- {string}?
     new: () -> Container,
-    Inject: (self: Container, class: InjectedClass<any>) -> (),
-    RegisterModule: (self: Container, name: string, class: InjectedClass<any>) -> (),
+    Inject: (self: Container, class: InjectedClass) -> (),
+    RegisterModule: (self: Container, name: string, class: InjectedClass) -> (),
     RegisterDirectory: (self: Container, dir: Instance) -> (),
     Start: (self: Container) -> (),
 }

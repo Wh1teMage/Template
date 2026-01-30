@@ -1,4 +1,3 @@
-local charm_sync = require("@Packages/charm-sync")
 local gt = require("@Packages/greentea")
 
 local schemas = {}

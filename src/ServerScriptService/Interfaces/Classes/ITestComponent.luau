@@ -1,4 +1,4 @@
-export type Main = {
+export type Main<T=Main> = {
 
     sayHello: () -> nil
 
