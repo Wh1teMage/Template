@@ -1,52 +1,110 @@
-local types = require("@Utilities/Signal/types")
+local RunService = game:GetService("RunService")
+
+local charm = require("@Packages/charm")
+local janitor = require("@Packages/janitor")
+local signal = require("@Packages/signal")
 
 local component = {}
 component.__index = component
 
-type States = {
-    Active: 'Active',
-    Paused: 'Paused',
-    Ended: 'Ended'
-}
+local StatesEnum = {
+	Active = "Active",
+	Paused = "Paused",
+	Ended = "Ended",
+} :: States
 
-local stateChanged
+type States = {
+	Active: "Active",
+	Paused: "Paused",
+	Ended: "Ended",
+}
 
 type Fields = {
-    StateChanged: types.BindableScope<>,
-    Finished: any,
+	StateChanged: signal.Signal<{ oldState: keyof<States>?, newState: keyof<States> }>,
+	Finished: signal.Signal<>,
 
-    _startTime: number,
-    _duration: number,
-    _passed: number,
+	_getState: () -> keyof<States>,
+	_setState: () -> keyof<States>,
+
+	_janitor: janitor.Janitor,
+	_startTime: number,
+	_duration: number,
+	_passed: number,
 }
 
-type IComponent = typeof(component) & Fields
+type IComponent = setmetatable<Fields, { __index: typeof(component) }>
+
+local function initialize(self: IComponent)
+	self._janitor:Add(RunService.Heartbeat:Connect(function(dt: number)
+		if self._getState() ~= StatesEnum.Active then
+			return
+		end
+		self._passed += dt
+
+		if self._passed >= self._duration then
+			self:Stop()
+		end
+	end))
+end
+-- ^ goes against data locality principle, which is kinda bad
 
 function component.constructor()
-    local self = setmetatable({
+	local self = setmetatable({
+		StateChanged = signal.new(),
+		Finished = signal.new(),
 
-    }, component)
-    return self
+		_janitor = janitor.new(),
+		_startTime = 0,
+		_duration = 0,
+		_passed = 0,
+	}, component) :: IComponent
+
+	self._getState, self._setState = charm.signal(StatesEnum.Ended)
+
+	charm.listen(self._getState, function(state, previous)
+		self.StateChanged:Fire({ newState = state, oldState = previous })
+	end)
+	-- ^ do i need to clean this?
+
+	initialize(self)
+
+	return self
 end
 
-function component.Start(self: IComponent)
-    self._startTime = os.clock()
+function component.Start(self: IComponent, duration: number)
+	assert(self._getState() ~= StatesEnum.Ended, `wrong state!`)
+
+	self._duration = duration
+	self._passed = 0
+	self._startTime = os.clock()
+
+	self._setState(StatesEnum.Active)
 end
 
 function component.Stop(self: IComponent)
-    
+	assert(self._getState() == StatesEnum.Ended, `wrong state!`)
+	self.Finished:Fire()
+	self._setState(StatesEnum.Ended)
 end
 
 function component.Pause(self: IComponent)
-    
+	assert(self._getState() ~= StatesEnum.Active, `wrong state!`)
+	self._setState(StatesEnum.Paused)
 end
 
 function component.Resume(self: IComponent)
-    
+	assert(self._getState() ~= StatesEnum.Paused, `wrong state!`)
+	self._setState(StatesEnum.Active)
 end
 
-function component.Adjust(self: IComponent)
-    
+function component.AdjustDuration(self: IComponent, duration: number)
+	assert(self._getState() == StatesEnum.Ended, `wrong state!`)
+	self._duration = duration
+end
+
+function component.Destroy(self: IComponent)
+	self._janitor:Cleanup()
+	-- ^ add more cleanup logic here
 end
 
 return component
