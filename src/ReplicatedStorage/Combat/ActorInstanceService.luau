@@ -1,3 +1,4 @@
+local UtilityComponent = require("@Utilities/Components/UtilityComponent")
 local Actor = require("./Actor")
 
 local service = {}
@@ -17,9 +18,7 @@ function service.constructor()
 	return self
 end
 
-function service.CreateActor(self: Class, actor: Actor.Class)
-	local id = "1"
-
+function service.CreateActor(self: Class, actor: Actor.Class, id: string)
 	local actorInstance = actor.new()
 	self._actors[id] = actorInstance
 	return actorInstance

@@ -20,8 +20,8 @@ type States = {
 }
 
 type Fields = {
-	StateChanged: signal.Signal<{ oldState: keyof<States>?, newState: keyof<States> }>,
-	Finished: signal.Signal<>,
+	stateChanged: signal.Signal<{ oldState: keyof<States>?, newState: keyof<States> }>,
+	finished: signal.Signal<>,
 
 	_getState: () -> keyof<States>,
 	_setState: () -> keyof<States>,
@@ -32,37 +32,33 @@ type Fields = {
 	_passed: number,
 }
 
-type IComponent = setmetatable<Fields, { __index: typeof(component) }>
+export type Class = setmetatable<Fields, { __index: typeof(component) }>
 
-local function initialize(self: IComponent)
+local function initialize(self: Class)
 	self._janitor:Add(RunService.Heartbeat:Connect(function(dt: number)
-		if self._getState() ~= StatesEnum.Active then
-			return
-		end
+		if self._getState() ~= StatesEnum.Active then return end
 		self._passed += dt
 
-		if self._passed >= self._duration then
-			self:Stop()
-		end
+		if self._passed >= self._duration then self:Stop() end
 	end))
 end
 -- ^ goes against data locality principle, which is kinda bad
 
 function component.constructor()
 	local self = setmetatable({
-		StateChanged = signal.new(),
-		Finished = signal.new(),
+		stateChanged = signal.new(),
+		finished = signal.new(),
 
 		_janitor = janitor.new(),
 		_startTime = 0,
 		_duration = 0,
 		_passed = 0,
-	}, component) :: IComponent
+	}, component) :: Class
 
 	self._getState, self._setState = charm.signal(StatesEnum.Ended)
 
 	charm.listen(self._getState, function(state, previous)
-		self.StateChanged:Fire({ newState = state, oldState = previous })
+		self.stateChanged:Fire({ newState = state, oldState = previous })
 	end)
 	-- ^ do i need to clean this?
 
@@ -71,38 +67,38 @@ function component.constructor()
 	return self
 end
 
-function component.Start(self: IComponent, duration: number)
-	assert(self._getState() ~= StatesEnum.Ended, `wrong state!`)
+function component.Start(self: Class, duration: number?)
+	if self._getState() ~= StatesEnum.Ended then return end
 
-	self._duration = duration
+	self._duration = duration or 1e6
 	self._passed = 0
 	self._startTime = os.clock()
 
 	self._setState(StatesEnum.Active)
 end
 
-function component.Stop(self: IComponent)
-	assert(self._getState() == StatesEnum.Ended, `wrong state!`)
-	self.Finished:Fire()
+function component.Stop(self: Class)
+	if self._getState() == StatesEnum.Ended then return end
+	self.finished:Fire()
 	self._setState(StatesEnum.Ended)
 end
 
-function component.Pause(self: IComponent)
-	assert(self._getState() ~= StatesEnum.Active, `wrong state!`)
+function component.Pause(self: Class)
+	if self._getState() ~= StatesEnum.Active then return end
 	self._setState(StatesEnum.Paused)
 end
 
-function component.Resume(self: IComponent)
-	assert(self._getState() ~= StatesEnum.Paused, `wrong state!`)
+function component.Resume(self: Class)
+	if self._getState() ~= StatesEnum.Paused then return end
 	self._setState(StatesEnum.Active)
 end
 
-function component.AdjustDuration(self: IComponent, duration: number)
-	assert(self._getState() == StatesEnum.Ended, `wrong state!`)
+function component.AdjustDuration(self: Class, duration: number)
+	if self._getState() == StatesEnum.Ended then return end
 	self._duration = duration
 end
 
-function component.Destroy(self: IComponent)
+function component.Destroy(self: Class)
 	self._janitor:Cleanup()
 	-- ^ add more cleanup logic here
 end

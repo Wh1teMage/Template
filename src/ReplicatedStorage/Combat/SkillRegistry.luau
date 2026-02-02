@@ -18,7 +18,7 @@ function service.constructor()
 end
 
 function service.RegisterSkill(self: Class, name: string)
-	local skillObject = Skill.constructor()
+	local skillObject = Skill.constructor(name)
 	self._skills[name] = skillObject
 	return skillObject
 end
@@ -27,4 +27,4 @@ function service.GetRegisteredSkill(self: Class, name: string)
 	return self._skills[name]
 end
 
-return service
+return service :: Class

@@ -1,7 +1,5 @@
-export type Main<T=Main> = {
-
-    sayHello: () -> nil
-
+export type Main<T = Main> = {
+	test: (self: T) -> string,
 }
 
 return {}
