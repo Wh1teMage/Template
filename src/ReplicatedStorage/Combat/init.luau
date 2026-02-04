@@ -1,7 +1,5 @@
 local sift = require("@Packages/sift")
-local Actor = require("@ReplicatedStorage/Combat/Actor")
 local ActorRegistry = require("@ReplicatedStorage/Combat/ActorRegistry")
-local Skill = require("@ReplicatedStorage/Combat/Skill")
 local SkillRegistry = require("@ReplicatedStorage/Combat/SkillRegistry")
 local ActorInstanceService = require("./Combat/ActorInstanceService")
 local SkillExecutionService = require("./Combat/SkillExecutionService")

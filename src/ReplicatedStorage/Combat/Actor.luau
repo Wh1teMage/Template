@@ -8,8 +8,9 @@ type Fields = {
 
 type InstanceFields = {
 	id: string,
-	_skillIds: { [string]: boolean },
-	_statusIds: { [string]: boolean },
+	_skillIds: { [string]: { id: string, name: string } },
+	_statusIds: { [string]: { id: string, name: string } },
+	_attributeSetIds: { [string]: { id: string, name: string } },
 }
 
 export type Class<T = {}> = setmetatable<Fields & T, { __index: typeof(actor) }>
@@ -31,10 +32,9 @@ function actor.constructor()
 	return self
 end
 
-function actor.SetSkillId(self: Instance, id: string)
-	self._skillIds[id] = true
+function actor.SetSkill(self: Instance, id: string, name: string)
+	self._skillIds[id] = { id = id, name = name }
 end
--- ^ separate instance methods from object methods
 
 function actor.GetSkillId(self: Instance, id: string)
 	return self._skillIds[id]
