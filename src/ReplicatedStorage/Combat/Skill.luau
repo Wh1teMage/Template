@@ -16,6 +16,7 @@ local states = {
 	Paused = "Paused",
 	Charging = "Charging",
 	Starting = "Starting",
+	Resumed = "Resumed",
 } :: States
 
 type States = {
@@ -25,6 +26,7 @@ type States = {
 	Ending: "Ending",
 	Charging: "Charging",
 	Starting: "Starting",
+	Resumed: "Resumed",
 }
 
 type Fields = {
@@ -52,6 +54,8 @@ type InstanceFields = {
 	_chargeValidators: { [string]: (self: Instance) -> boolean },
 	_startValidators: { [string]: (self: Instance) -> boolean },
 	_stopValidators: { [string]: (self: Instance) -> boolean },
+	_pauseValidators: { [string]: (self: Instance) -> boolean },
+	_resumeValidators: { [string]: (self: Instance) -> boolean },
 	_interruptValidators: { [string]: (self: Instance) -> boolean },
 
 	stateChanged: signal.Signal<{ oldState: keyof<States>?, newState: keyof<States> }>,
@@ -74,22 +78,26 @@ local _serverOnly = function<T>(fn: T)
 end
 
 local _validateCharge = function(self: Instance)
-	if not _validate then return false end
 	return _validate(self, { states.Charging }, self._chargeValidators)
 end
 
 local _validateStart = function(self: Instance)
-	if not _validate then return false end
 	return _validate(self, { states.Starting }, self._startValidators)
 end
 
 local _validateStop = function(self: Instance)
-	if not _validate then return false end
 	return _validate(self, { states.Ending }, self._stopValidators)
 end
 
+local _validatePause = function(self: Instance)
+	return _validate(self, { states.Charging, states.OnCD, states.Starting, states.Ending }, self._pauseValidators)
+end
+
+local _validateResume = function(self: Instance)
+	return _validate(self, { states.Paused }, self._resumeValidators)
+end
+
 local _validateInterrupt = function(self: Instance)
-	if not _validate then return false end
 	return _validate(self, { states.Starting, states.Charging, states.Ending }, self._interruptValidators)
 end
 
@@ -142,13 +150,30 @@ local _stop = function(self: Instance)
 	end)
 end
 
+local _pause = function(self: Instance)
+	if not _validatePause(self) then return end
+
+	self._pausedState = self._getState()
+	self._useTimer:Pause()
+	self._cdTimer:Pause()
+	self._setState(states.Paused)
+end
+
+local _resume = function(self: Instance)
+	if not _validateResume(self) then return end
+	self._useTimer:Resume()
+	self._cdTimer:Resume()
+	self._currentThread:Resume()
+end
+
 local stateMap = {
 	[states.Charging] = _charge,
 	[states.Starting] = _start,
 	[states.Ending] = _stop,
 	[states.Idle] = nil,
 	[states.OnCD] = _setCD,
-	[states.Paused] = nil,
+	[states.Paused] = _pause,
+	[states.Resumed] = _resume,
 }
 
 function skill.constructor(name: string)
@@ -182,7 +207,6 @@ function skill.constructor(name: string)
 		end))
 
 		object._janitor:Add(object.stateChanged:Connect(function(data)
-			if data.oldState == states.Paused then return end
 			if stateMap[data.newState] then (stateMap[data.newState] :: () -> ())(object) end
 		end))
 
@@ -206,20 +230,11 @@ end
 
 -- state change -> pause (not as method)
 function skill.Pause(self: Instance)
-	self._pausedState = self._getState()
-
-	self._useTimer:Pause()
-	self._cdTimer:Pause()
-	self._setState(states.Paused)
+	_serverOnly(self._setState)(states.Paused)
 end
 
 function skill.Resume(self: Instance)
-	assert(self._pausedState, `skill was resumed without pausing!`)
-	self._setState(self._pausedState)
-
-	self._useTimer:Resume()
-	self._cdTimer:Resume()
-	self._currentThread:Resume()
+	_serverOnly(self._setState)(states.Resumed)
 end
 function skill.Interrupt(self: Instance)
 	_interrupt(self)

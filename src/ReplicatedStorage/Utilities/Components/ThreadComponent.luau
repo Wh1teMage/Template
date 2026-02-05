@@ -64,8 +64,8 @@ end
 
 function component.Pause(self: Class)
 	if self._getState() ~= StatesEnum.Active then return end
-	coroutine.yield()
 	self._setState(StatesEnum.Paused)
+	coroutine.yield()
 end
 
 function component.Resume(self: Class)
