@@ -2,6 +2,7 @@ local charm = require("@Packages/charm")
 local janitor = require("@Packages/janitor")
 local sift = require("@Packages/sift")
 local signal = require("@Packages/signal")
+
 local ThreadComponent = require("@Utilities/Components/ThreadComponent")
 local TimerComponent = require("@Utilities/Components/TimerComponent")
 local UtilityComponent = require("@Utilities/Components/UtilityComponent")
@@ -221,6 +222,7 @@ function skill.Resume(self: Instance)
 	self._cdTimer:Resume()
 	self._currentThread:Resume()
 end
+
 function skill.Interrupt(self: Instance)
 	_interrupt(self)
 end
