@@ -1,4 +1,5 @@
 local sift = require("@Packages/sift")
+local UtilityComponent = require("@Utilities/Components/UtilityComponent")
 local actor = {}
 actor.__index = actor
 
@@ -19,12 +20,12 @@ export type Instance<T = {}> = setmetatable<InstanceFields & T, { __index: Class
 function actor.constructor()
 	local self = setmetatable({}, actor) :: Class
 
-	self:onConstruct()
+	UtilityComponent:GetBasedOnRuntime(self.onServerConstruct, self.onClientConstruct)(self)
 
 	function self.new()
 		local object = setmetatable({}, { __index = self }) :: Instance
 
-		object:onInstanceConstruct()
+		UtilityComponent:GetBasedOnRuntime(self.onServerInstanceConstruct, self.onClientInstanceConstruct)(object)
 
 		return object
 	end
@@ -60,7 +61,10 @@ function actor.GetSkillIds(self: Instance)
 	return sift.Dictionary.keys(self._skillIds)
 end
 
-function actor.onConstruct(self: Class) end
-function actor.onInstanceConstruct(self: Instance) end
+function actor.onServerConstruct<T>(self: T) end
+function actor.onServerInstanceConstruct<T>(self: T) end
+
+function actor.onClientConstruct<T>(self: T) end
+function actor.onClientInstanceConstruct<T>(self: T) end
 
 return actor

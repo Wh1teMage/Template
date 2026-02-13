@@ -3,6 +3,7 @@ local janitor = require("@Packages/janitor")
 local sift = require("@Packages/sift")
 local signal = require("@Packages/signal")
 
+local AttributeComponent = require("@Utilities/Components/AttributeComponent")
 local ThreadComponent = require("@Utilities/Components/ThreadComponent")
 local TimerComponent = require("@Utilities/Components/TimerComponent")
 local UtilityComponent = require("@Utilities/Components/UtilityComponent")
@@ -32,16 +33,8 @@ type States = {
 	Interrupted: "Interrupted",
 }
 
-local test = {
-	[states.Idle] = { Client = true, Server = true },
-}
--- ^ migrationMap
-
 type Fields = {
 	new: () -> Instance,
-
-	duration: number,
-	cd: number,
 
 	read runContext: "Server" | "Client",
 	name: string,
@@ -58,12 +51,19 @@ type PrivateInstanceFields = {
 	_useTimer: TimerComponent.Class,
 	_janitor: janitor.Janitor,
 
+	_effectIds: { [string]: { id: string, name: string } },
+	_attributeSetIds: { [string]: { id: string, name: string } },
+
 	_stateMigrations: { [keyof<States>]: { [string]: boolean } },
 	_stateValidators: { [keyof<States>]: { [string]: (self: Instance) -> boolean } },
 }
 
 type PublicInstanceFields = {
 	id: string,
+
+	cd: AttributeComponent.Instance,
+	duration: AttributeComponent.Instance,
+
 	stateChanged: signal.Signal<{ oldState: keyof<States>?, newState: keyof<States> }>,
 }
 
@@ -100,9 +100,14 @@ local _serverOnly = function<T>(fn: T)
 end
 
 local _setCD = function(self: PrivateInstance)
+	if not self.cd then
+		warn(`cooldown isnt initialized!`)
+		return
+	end
+
 	self._useTimer:Stop()
 	self._currentThread:Stop()
-	self._cdTimer:Start(self.cd)
+	self._cdTimer:Start(self.cd:Get())
 end
 
 local _interrupt = function(self: PrivateInstance)
@@ -115,7 +120,7 @@ end
 local _charge = function(self: PrivateInstance)
 	local selectedFunction = UtilityComponent:GetBasedOnRuntime(self.onServerCharge, self.onClientCharge)
 
-	self._useTimer:Start(self.duration)
+	self._useTimer:Start(self.duration:Get())
 
 	self._currentThread:Start(function()
 		selectedFunction(self)
@@ -178,8 +183,12 @@ function skill.constructor(name: string)
 		runContext = UtilityComponent:GetRunContext(),
 	}, skill) :: Class
 
+	UtilityComponent:GetBasedOnRuntime(self.onServerConstruct, self.onClientConstruct)(self)
+
 	function self.new()
 		local object = setmetatable({}, { __index = self }) :: PrivateInstance
+
+		UtilityComponent:GetBasedOnRuntime(self.onServerInstanceConstruct, self.onClientInstanceConstruct)(object)
 
 		object.stateChanged = signal.new()
 
@@ -224,7 +233,6 @@ function skill.constructor(name: string)
 
 		object._janitor:Add(object._useTimer.finished:Connect(function()
 			object._setState(states.OnCD)
-			object._cdTimer:Start(self.duration)
 		end))
 
 		object._janitor:Add(object.stateChanged:Connect(function(data)
@@ -236,6 +244,47 @@ function skill.constructor(name: string)
 	end
 
 	return self
+end
+
+function skill.ChangeMigration(self: Instance, scope: keyof<States>, state: { Client: boolean, Server: boolean })
+	self = self :: PrivateInstance
+	self._stateMigrations[scope] = state :: { [string]: boolean }
+end
+
+function skill.AddValidation(self: Instance, state: keyof<States>, name: string, fn: (self: Instance) -> boolean)
+	self = self :: PrivateInstance
+	self._stateValidators[state][name] = fn
+end
+
+function skill.RemoveValidation(self: Instance, state: keyof<States>, name: string)
+	self = self :: PrivateInstance
+	self._stateValidators[state][name] = nil
+end
+
+function skill.SetData(self: Instance, cd: number, duration: number)
+	self = self :: PrivateInstance
+	self.cd = AttributeComponent.constructor(cd)
+	self.duration = AttributeComponent.constructor(duration)
+end
+
+function skill.SetEffect(self: Instance, id: string, name: string)
+	self = self :: PrivateInstance
+	self._effectIds[id] = { id = id, name = name }
+end
+
+function skill.GetEffect(self: Instance, id: string)
+	self = self :: PrivateInstance
+	return self._effectIds[id]
+end
+
+function skill.SetAttributeSet(self: Instance, id: string, name: string)
+	self = self :: PrivateInstance
+	self._attributeSetIds[id] = { id = id, name = name }
+end
+
+function skill.GetAttributeSet(self: Instance, id: string)
+	self = self :: PrivateInstance
+	return self._attributeSetIds[id]
 end
 
 function skill.SetActorId(self: Instance, id: string)
@@ -274,13 +323,18 @@ function skill.Start(self: Instance)
 	self._setState(states.Charging)
 end
 
+function skill.onServerConstruct<T>(self: T) end
+function skill.onServerInstanceConstruct<T>(self: T) end
 function skill.onServerInterrupt<T>(self: T) end
-function skill.onClientInterrupt<T>(self: T) end
 function skill.onServerCharge<T>(self: T) end
-function skill.onClientCharge<T>(self: T) end
 function skill.onServerStart<T>(self: T) end
-function skill.onClientStart<T>(self: T) end
 function skill.onServerStop<T>(self: T) end
+
+function skill.onClientConstruct<T>(self: T) end
+function skill.onClientInstanceConstruct<T>(self: T) end
+function skill.onClientInterrupt<T>(self: T) end
+function skill.onClientCharge<T>(self: T) end
+function skill.onClientStart<T>(self: T) end
 function skill.onClientStop<T>(self: T) end
 
 return skill

@@ -4,6 +4,7 @@ local sift = require("@Packages/sift")
 local signal = require("@Packages/signal")
 local ThreadComponent = require("@Utilities/Components/ThreadComponent")
 local TimerComponent = require("@Utilities/Components/TimerComponent")
+local UtilityComponent = require("@Utilities/Components/UtilityComponent")
 
 local effect = {}
 effect.__index = effect
@@ -162,14 +163,14 @@ function effect.constructor(name: string)
 		name = name,
 	}, effect) :: Class
 
-	self:onConstruct()
+	UtilityComponent:GetBasedOnRuntime(self.onServerConstruct, self.onClientConstruct)(self)
 
 	function self.new<T>(parent: T)
 		local object = setmetatable({
 			object = parent,
 		}, { __index = self }) :: Instance
 
-		object:onInstanceConstruct()
+		UtilityComponent:GetBasedOnRuntime(self.onServerInstanceConstruct, self.onClientInstanceConstruct)(object)
 
 		object._getState, object._setState = charm.signal(states.Idle)
 
@@ -196,8 +197,11 @@ end
 function effect.onStart<T>(self: T) end
 function effect.onStop<T>(self: T) end
 
-function effect.onConstruct<T>(self: T) end
-function effect.onInstanceConstruct<T>(self: T) end
+function effect.onServerConstruct<T>(self: T) end
+function effect.onServerInstanceConstruct<T>(self: T) end
+
+function effect.onClientConstruct<T>(self: T) end
+function effect.onClientInstanceConstruct<T>(self: T) end
 
 function effect.Start(self: Instance)
 	self._setState(states.Start)

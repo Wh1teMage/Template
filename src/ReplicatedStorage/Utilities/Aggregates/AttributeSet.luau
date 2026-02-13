@@ -83,20 +83,4 @@ end
 function attributeSet.onConstruct<T>(self: T) end
 function attributeSet.onInstanceConstruct<T>(self: T) end
 
-local data = {
-	test = 123,
-}
-
-local test = attributeSet.constructor({
-	test = 123,
-})
-
-function test.onConstruct(self: Class<typeof(data)>) end
-
-function test.onInstanceConstruct(self: Instance<typeof(data)>) end
-
-local testObj = test.new()
-
-print(testObj.data.test)
-
 return attributeSet
