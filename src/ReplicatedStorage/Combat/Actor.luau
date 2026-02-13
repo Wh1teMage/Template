@@ -9,7 +9,7 @@ type Fields = {
 type InstanceFields = {
 	id: string,
 	_skillIds: { [string]: { id: string, name: string } },
-	_statusIds: { [string]: { id: string, name: string } },
+	_effectIds: { [string]: { id: string, name: string } },
 	_attributeSetIds: { [string]: { id: string, name: string } },
 }
 
@@ -32,12 +32,12 @@ function actor.constructor()
 	return self
 end
 
-function actor.SetStatus(self: Instance, id: string, name: string)
-	self._statusIds[id] = { id = id, name = name }
+function actor.SetEffect(self: Instance, id: string, name: string)
+	self._effectIds[id] = { id = id, name = name }
 end
 
-function actor.GetStatus(self: Instance, id: string)
-	return self._statusIds[id]
+function actor.GetEffect(self: Instance, id: string)
+	return self._effectIds[id]
 end
 
 function actor.SetAttributeSet(self: Instance, id: string, name: string)
