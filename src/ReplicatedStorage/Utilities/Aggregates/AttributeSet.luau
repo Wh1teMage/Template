@@ -1,4 +1,4 @@
-local Attribute = require('../Components/AttributeComponent')
+local Attribute = require("../Components/AttributeComponent")
 local sift = require("@Packages/sift")
 
 local attributeSet = {}
@@ -18,32 +18,31 @@ export type Class<data = {}, T = {}> = setmetatable<Fields<data> & T, { __index:
 export type Instance<data = {}> = setmetatable<InstanceFields<data>, { __index: typeof(attributeSet) }>
 
 type function validateMap(set: type, valueType: type)
-    assert(set:is('table'), 'set isnt a table!')
+	assert(set:is("table"), "set isnt a table!")
 
-    local properties = set:properties()
+	local properties = set:properties()
 
-    for _, value in properties do
-        local read = value.read
-        assert(read, 'read property doesnt exist!')
-        if (read ~= valueType) then error(`value must be {valueType.tag}!`) end
-    end
+	for _, value in properties do
+		local read = value.read
+		assert(read, "read property doesnt exist!")
+		if read ~= valueType then error(`value must be {valueType.tag}!`) end
+	end
 
-    return set
+	return set
 end
 
 type function changeMapValues(set: type, valueType: type)
-    assert(set:is('table'), 'set isnt a table!')
+	assert(set:is("table"), "set isnt a table!")
 
 	local newTable = {}
-    local properties = set:properties()
+	local properties = set:properties()
 
-    for key, value in properties do
-        newTable[key] = valueType
-    end
+	for key, value in properties do
+		newTable[key] = valueType
+	end
 
-    return types.newtable(newTable)
+	return types.newtable(newTable)
 end
-
 
 function attributeSet.constructor<T>(data: T)
 	local freezed = sift.Dictionary.freezeDeep(data)
@@ -66,7 +65,7 @@ function attributeSet.constructor<T>(data: T)
 				local result = rawget(t, k) :: Attribute.Instance?
 				assert(result, `{k} value doesnt exist!`) -- maybe use warnings here
 				return result:Get()
-			end
+			end,
 		})
 
 		local object = setmetatable({
@@ -85,20 +84,16 @@ function attributeSet.onConstruct<T>(self: T) end
 function attributeSet.onInstanceConstruct<T>(self: T) end
 
 local data = {
-	test = 123
+	test = 123,
 }
 
 local test = attributeSet.constructor({
-	test = 123
+	test = 123,
 })
 
-function test.onConstruct(self: Class<typeof(data)>)
-	
-end
+function test.onConstruct(self: Class<typeof(data)>) end
 
-function test.onInstanceConstruct(self: Instance<typeof(data)>)
-	
-end
+function test.onInstanceConstruct(self: Instance<typeof(data)>) end
 
 local testObj = test.new()
 

@@ -34,7 +34,7 @@ lower layer, used to create an API for specific systems, doesnt include business
 **Structure**
 - **Components** contains simple logic, doesnt have a list of existing components or a id. Mostly used as an utility for Aggregates. E.x TimerComponent
 
-- **Aggregates** contains object logic. Logic which specifies how the object acts should be constructed here. E.x AbilityAggregate. Aggregates cant require other Aggregates on the same layer
+- **Aggregates** contains object logic. Logic which specifies how the object should behave. Manage object's state, define methods, etc. E.x AbilityAggregate. E.x AbilityAggregate. Aggregates cant require other Aggregates on the same layer
 
 - **Services** contains service logic. Used to operate on Aggregates. Capabale of registration, creation, deletion of Aggregates. Can be also used to link Aggregates (E.x AbilityExecutionService, which handles AbilityAggregate and ActorAggregate). Services cant require other Services on the same layer
 

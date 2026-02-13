@@ -35,7 +35,7 @@ end
 
 function service.StartSkill(self: Class, skill: Skill.Instance, actor: Actor.Instance)
 	assert(actor:GetSkillId(skill.id), `{actor.id} doesnt have a {skill.name} skill!`)
-	skill:Charge()
+	skill:Start()
 end
 
 function service.InterruptSkill(self: Class, skill: Skill.Instance, actor: Actor.Instance)

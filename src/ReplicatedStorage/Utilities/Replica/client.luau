@@ -4,9 +4,9 @@ local Signals = require("@ReplicatedStorage/Signals")
 
 local syncer = charm_sync.client({ atoms = Atoms :: any })
 
-Signals.Sync:Connect(function(...)  
-    print(...)
-    syncer:sync(...)
+Signals.Sync:Connect(function(...)
+	print(...)
+	syncer:sync(...)
 end)
 
 Signals.Hydrate:Fire()

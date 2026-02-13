@@ -4,6 +4,10 @@ local Utilities = {}
 
 local counter = 1
 
+function Utilities:GetRunContext(): "Server" | "Client"
+	return RunService:IsServer() and "Server" or "Client"
+end
+
 function Utilities:GetBasedOnRuntime<T, G>(serverCall: T, clientCall: G)
 	return RunService:IsServer() and serverCall or clientCall
 end

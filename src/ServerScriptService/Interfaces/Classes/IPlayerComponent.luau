@@ -1,7 +1,6 @@
-export type Main<T=Main> = {
+export type Main<T = Main> = {
 
-    test: () -> any
-
+	test: () -> any,
 }
 
 return {}

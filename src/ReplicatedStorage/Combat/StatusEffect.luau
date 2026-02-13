@@ -9,45 +9,45 @@ local effect = {}
 effect.__index = effect
 
 local effectType = {
-    Instant = 'Instant',
-    Duration = 'Duration',
-    Infinite = 'Infinite',
+	Instant = "Instant",
+	Duration = "Duration",
+	Infinite = "Infinite",
 } :: EffectType
 
 type EffectType = {
-    Instant: 'Instant',
-    Duration: 'Duration',
-    Infinite: 'Infinite',
+	Instant: "Instant",
+	Duration: "Duration",
+	Infinite: "Infinite",
 }
 
 local states = {
-    Idle = 'Idle',
-    Start = 'Start',
-    Stop = 'Stop',
-    Resume = 'Resume',
-    Pause = 'Pause',
+	Idle = "Idle",
+	Start = "Start",
+	Stop = "Stop",
+	Resume = "Resume",
+	Pause = "Pause",
 } :: States
 
 type States = {
-    Idle: 'Idle',
-    Start: 'Start',
-    Stop: 'Stop',
-    Resume: 'Resume',
-    Pause: 'Pause',
+	Idle: "Idle",
+	Start: "Start",
+	Stop: "Stop",
+	Resume: "Resume",
+	Pause: "Pause",
 }
 
 type Fields = {
 	new: () -> Instance,
-    name: string,
-    type: keyof<EffectType>,
+	name: string,
+	type: keyof<EffectType>,
 }
 
 type PrivateInstanceFields = {
-    _janitor: janitor.Janitor,
-    _timer: TimerComponent.Class,
-    _currentThread: ThreadComponent.Class,
+	_janitor: janitor.Janitor,
+	_timer: TimerComponent.Class,
+	_currentThread: ThreadComponent.Class,
 
-    _savedState: keyof<States>?,
+	_savedState: keyof<States>?,
 
 	_setState: (state: keyof<States>) -> (),
 	_getState: () -> keyof<States>,
@@ -55,131 +55,137 @@ type PrivateInstanceFields = {
 
 type InstanceFields<T = {}> = {
 	id: string,
-    object: T,
-    effectType: keyof<EffectType>,
+	object: T,
+	effectType: keyof<EffectType>,
 
-    duration: number?,
+	duration: number?,
 
-    _janitor: janitor.Janitor,
-    _timer: TimerComponent.Class,
-    _currentThread: ThreadComponent.Class,
+	_janitor: janitor.Janitor,
+	_timer: TimerComponent.Class,
+	_currentThread: ThreadComponent.Class,
 
-    _savedState: keyof<States>?,
+	_savedState: keyof<States>?,
 
 	_setState: (state: keyof<States>) -> (),
 	_getState: () -> keyof<States>,
 
-    stateChanged: signal.Signal<{ newState: keyof<States>, oldState: keyof<States>? }>
+	stateChanged: signal.Signal<{ newState: keyof<States>, oldState: keyof<States>? }>,
 }
 
 export type Class<T = {}> = setmetatable<Fields & T, { __index: typeof(effect) }>
 export type Instance<T = {}> = setmetatable<InstanceFields & T, { __index: Class }>
 
 local startBasedOnType = {
-    [effectType.Instant] = function(self: Instance)
-        self:onStart()
-        self._setState(states.Stop)
-    end,
+	[effectType.Instant] = function(self: Instance)
+		self:onStart()
+		self._setState(states.Stop)
+	end,
 
-    [effectType.Duration] = function(self: Instance)
-        self:onStart()
-        self._currentThread:Start(function()
-		    task.wait(self.duration or 5)
-		    if self._getState() == states.Pause then self._currentThread:Pause() end
-		    self._setState(states.Stop)
-	    end)
-    end,
+	[effectType.Duration] = function(self: Instance)
+		self:onStart()
+		self._currentThread:Start(function()
+			task.wait(self.duration or 5)
+			if self._getState() == states.Pause then self._currentThread:Pause() end
+			self._setState(states.Stop)
+		end)
+	end,
 
-    [effectType.Infinite] = function(self: Instance)
-        self:onStart()
-    end
+	[effectType.Infinite] = function(self: Instance)
+		self:onStart()
+	end,
 }
 
 local stopBasedOnType = {
-    [effectType.Instant] = function(self: Instance)
-        self:onStop()
-    end,
+	[effectType.Instant] = function(self: Instance)
+		self:onStop()
+	end,
 
-    [effectType.Duration] = function(self: Instance)
-        self:onStop()
-    end,
+	[effectType.Duration] = function(self: Instance)
+		self:onStop()
+	end,
 
-    [effectType.Infinite] = function(self: Instance)
-        self:onStop()
-    end
+	[effectType.Infinite] = function(self: Instance)
+		self:onStop()
+	end,
 }
 
 local function _start(self: Instance)
-    startBasedOnType[self.type](self)
+	startBasedOnType[self.type](self)
 end
 
 local function _stop(self: Instance)
-    stopBasedOnType[self.type](self)
+	stopBasedOnType[self.type](self)
 end
 
 local function _pause(self: Instance)
-    if (not sift.Array.has({ states.Start }, self._getState())) then return end
+	if not sift.Array.has({ states.Start }, self._getState()) then return end
 
-    self._savedState = self._getState()
-    
-    self._currentThread:Pause()
-    self._setState(states.Pause)
+	self._savedState = self._getState()
+
+	self._currentThread:Pause()
+	self._setState(states.Pause)
 end
 
 local function _resume(self: Instance)
-    if (not sift.Array.has({ states.Pause }, self._getState())) then return end
+	if not sift.Array.has({ states.Pause }, self._getState()) then return end
 
-    self._currentThread:Pause()
-    self._setState(states.Resume)
+	self._currentThread:Pause()
+	self._setState(states.Resume)
 end
 
 local function _postResume(self: Instance)
-    if (not sift.Array.has({ states.Resume }, self._getState())) then return end
-    assert(self._savedState, `saved State hasnt been found!`)
+	if not sift.Array.has({ states.Resume }, self._getState()) then return end
+	assert(self._savedState, `saved State hasnt been found!`)
 
-    self._currentThread:Resume()
-    self._setState(self._savedState)
+	self._currentThread:Resume()
+	self._setState(self._savedState)
 
-    self._savedState = nil
+	self._savedState = nil
 end
 
 local stateMap = {
-    [states.Idle] = function(self: Instance) end,
-    [states.Resume] = function(self: Instance) _postResume(self) end,
-    [states.Pause] = function(self: Instance) end,
-    [states.Start] = function(self: Instance) _start(self) end,
-    [states.Stop] = function(self: Instance) _stop(self) end,
+	[states.Idle] = function(self: Instance) end,
+	[states.Resume] = function(self: Instance)
+		_postResume(self)
+	end,
+	[states.Pause] = function(self: Instance) end,
+	[states.Start] = function(self: Instance)
+		_start(self)
+	end,
+	[states.Stop] = function(self: Instance)
+		_stop(self)
+	end,
 }
 
 function effect.constructor(name: string)
 	local self = setmetatable({
-        name = name,
-    }, effect) :: Class
+		name = name,
+	}, effect) :: Class
 
 	self:onConstruct()
 
 	function self.new<T>(parent: T)
 		local object = setmetatable({
-            object = parent
-        }, { __index = self }) :: Instance
+			object = parent,
+		}, { __index = self }) :: Instance
 
 		object:onInstanceConstruct()
 
-        object._getState, object._setState = charm.signal(states.Idle)
+		object._getState, object._setState = charm.signal(states.Idle)
 
-        object._timer = TimerComponent.constructor()
-        object._currentThread = ThreadComponent.constructor()
+		object._timer = TimerComponent.constructor()
+		object._currentThread = ThreadComponent.constructor()
 
-        object.stateChanged = signal.new()
+		object.stateChanged = signal.new()
 
-        object._janitor:Add(charm.listen(object._getState, function(state, previous)
-            object.stateChanged:Fire({ newState = state, oldState = previous })
-        end))
+		object._janitor:Add(charm.listen(object._getState, function(state, previous)
+			object.stateChanged:Fire({ newState = state, oldState = previous })
+		end))
 
-        object.stateChanged:Connect(function(data)
-            if (data.oldState == states.Resume) then return end
-            if (stateMap[data.newState]) then stateMap[data.newState](object) end
-        end)
+		object.stateChanged:Connect(function(data)
+			if data.oldState == states.Resume then return end
+			if stateMap[data.newState] then stateMap[data.newState](object) end
+		end)
 
 		return object
 	end
@@ -194,19 +200,19 @@ function effect.onConstruct<T>(self: T) end
 function effect.onInstanceConstruct<T>(self: T) end
 
 function effect.Start(self: Instance)
-    self._setState(states.Start)
+	self._setState(states.Start)
 end
 
 function effect.Stop(self: Instance)
-    self._setState(states.Stop)
+	self._setState(states.Stop)
 end
 
 function effect.Pause(self: Instance)
-    _pause(self)
+	_pause(self)
 end
 
 function effect.Resume(self: Instance)
-    _resume(self)
+	_resume(self)
 end
 
 return effect

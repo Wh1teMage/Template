@@ -29,9 +29,7 @@ local function triggerRemote(name: string, ...)
 end
 
 local function connectRemote(remote: RemoteEvent)
-	if registeredRemotes[remote] then
-		return
-	end
+	if registeredRemotes[remote] then return end
 
 	if RunService:IsClient() then
 		remote.OnClientEvent:Connect(function(name: string, ...)
@@ -48,16 +46,12 @@ local function connectRemote(remote: RemoteEvent)
 end
 
 script.ChildAdded:Connect(function(a0: Instance)
-	if not a0:IsA("RemoteEvent") then
-		return
-	end
+	if not a0:IsA("RemoteEvent") then return end
 	connectRemote(a0)
 end)
 
 for _, a0 in pairs(script:GetChildren()) do
-	if not a0:IsA("RemoteEvent") then
-		continue
-	end
+	if not a0:IsA("RemoteEvent") then continue end
 	connectRemote(a0)
 end
 
@@ -97,9 +91,7 @@ local fireTable = {
 }
 
 function signal:CreateBindable(name: string, validator: gt.Type?)
-	if signals[Enums.EventType.Bindable][name] then
-		return signals[Enums.EventType.Bindable][name]
-	end
+	if signals[Enums.EventType.Bindable][name] then return signals[Enums.EventType.Bindable][name] end
 	local event = setmetatable({
 		Name = name,
 		Connections = {},
@@ -113,9 +105,7 @@ function signal:CreateBindable(name: string, validator: gt.Type?)
 end
 
 function signal:CreateRemote(name: string, validator: gt.Type?)
-	if signals[Enums.EventType.Remote][name] then
-		return signals[Enums.EventType.Remote][name]
-	end
+	if signals[Enums.EventType.Remote][name] then return signals[Enums.EventType.Remote][name] end
 	local event = setmetatable({
 		Name = name,
 		Connections = {},
@@ -140,19 +130,13 @@ function signal:CreateRemote(name: string, validator: gt.Type?)
 		local connecton: RBXScriptConnection?
 
 		task.delay(10, function()
-			if not connecton then
-				return
-			end
+			if not connecton then return end
 			connecton:Disconnect()
 		end)
 
 		connecton = script.ChildAdded:Connect(function(a0: Instance)
-			if not connecton then
-				return
-			end
-			if a0.Name ~= name then
-				return
-			end
+			if not connecton then return end
+			if a0.Name ~= name then return end
 
 			instance = a0
 
