@@ -1,4 +1,4 @@
-local Combat = require("@ReplicatedStorage/Combat")
+local Combat = require("../TestCombat")
 local types = require("@ReplicatedStorage/Combat/types")
 
 local actor = Combat:RegisterActor("Default")

@@ -2,6 +2,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local ConditionNode = require("@ReplicatedStorage/Nodes/ControlNode/ConditionNode")
+local TestCombat = require("@ReplicatedStorage/TestCombat")
+local initializator = require("@ReplicatedStorage/TestCombat/initializator")
+
 local Container = require("@Utilities/Container")
 local PrintNode = require(ReplicatedStorage.Nodes.ActionNode.Overall.PrintNode)
 local Sequence = require(ReplicatedStorage.Nodes.ControlNode.Sequence)
@@ -33,4 +36,6 @@ end)
 
 local TestComponentCopy = require(ServerScriptService.Components.TestComponentCopy)
 
+local test = TestCombat:CreateActor("Default", "123")
+print(test)
 --print(TestComponentCopy)

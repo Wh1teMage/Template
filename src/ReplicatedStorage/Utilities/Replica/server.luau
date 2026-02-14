@@ -1,7 +1,7 @@
 local Atoms = require("@Info/Atoms")
 local charm_sync = require("@Packages/charm-sync")
 local Signals = require("@ServerScriptService/Signals")
-
+--[[
 local syncer = charm_sync.server({ atoms = Atoms :: any })
 
 syncer:connect(function(player: Player, ...: { data: { [number | string]: any }, type: "init" } | { data: { [number | string]: any }, type: "patch" })  
@@ -26,3 +26,4 @@ task.spawn(function()
 end)
 
 return {}
+]]
