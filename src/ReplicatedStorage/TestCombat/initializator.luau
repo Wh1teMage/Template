@@ -1,5 +1,5 @@
 for _, v: ModuleScript in pairs(script.Parent:GetChildren()) do
-	require(v)
+	(require)(v)
 end
 
 return {}

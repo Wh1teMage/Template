@@ -22,14 +22,14 @@ function service.constructor()
 		_skills = {},
 	}, service) :: Class
 
-	self._getSkillStates, self._setSkillStates = charm.signal({})
-	self._janitor = janitor.new()
+	--self._getSkillStates, self._setSkillStates = charm.signal({})
+	--self._janitor = janitor.new()
 
-	charm_sync.server.connect(self._replicateServerFunction)
+	--charm_sync.server.connect(self._replicateServerFunction)
 
 	return self
 end
-
+--[[
 function service.AddPlayerReplication(self: Class, player: Player)
 	charm_sync.server.addSignalsToClient(player, {
 		skillStates = self._getSkillStates(),
@@ -56,6 +56,7 @@ function service.PrepareReplicationData(self: Class)
 	self._setSkillStates(data)
 	-- ^ check how this thing works
 end
+]]
 
 function service.CreateSkill(self: Class, skill: Skill.Class, actor: Actor.Instance)
 	local id = tostring(UtilityComponent:GenerateId())
@@ -63,9 +64,11 @@ function service.CreateSkill(self: Class, skill: Skill.Class, actor: Actor.Insta
 	local skillInstance = skill.new()
 	skillInstance:SetActorId(id)
 
+	--[[
 	self._janitor:Add(skillInstance.stateChanged:Connect(function()
 		self:PrepareReplicationData()
 	end))
+	]]
 
 	self._skills[id] = skillInstance
 	return skillInstance
