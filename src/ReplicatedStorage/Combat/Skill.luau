@@ -3,6 +3,7 @@ local janitor = require("@Packages/janitor")
 local sift = require("@Packages/sift")
 local signal = require("@Packages/signal")
 
+local AttributeComponent = require("@Utilities/Components/AttributeComponent")
 local ThreadComponent = require("@Utilities/Components/ThreadComponent")
 local TimerComponent = require("@Utilities/Components/TimerComponent")
 local UtilityComponent = require("@Utilities/Components/UtilityComponent")
@@ -10,205 +11,200 @@ local UtilityComponent = require("@Utilities/Components/UtilityComponent")
 local skill = {}
 skill.__index = skill
 
-local states = {
-	Idle = "Idle",
+local tags = {
 	OnCD = "OnCD",
-	Ending = "Ending",
-	Paused = "Paused",
+	Locked = "Locked",
+	Interrupted = "Interrupted",
+
+	Idle = "Idle",
 	Charging = "Charging",
 	Starting = "Starting",
-	Resumed = "Resumed",
-} :: States
-
-type States = {
-	Idle: "Idle",
-	OnCD: "OnCD",
-	Paused: "Paused",
-	Ending: "Ending",
-	Charging: "Charging",
-	Starting: "Starting",
-	Resumed: "Resumed",
+	Ending = "Ending",
 }
+
+type Tags = typeof(tags)
 
 type Fields = {
 	new: () -> Instance,
 
-	duration: number,
-	cd: number,
-
-	name: string,
+	read runContext: "Server" | "Client",
+	read name: string,
 }
 
-type InstanceFields = {
-	id: string,
-
+type PrivateInstanceFields = {
 	_actorId: string,
-	_setState: (state: keyof<States>) -> (),
-	_getState: () -> keyof<States>,
-	_pausedState: keyof<States>?,
 
 	_currentThread: ThreadComponent.Class,
 	_cdTimer: TimerComponent.Class,
 	_useTimer: TimerComponent.Class,
 	_janitor: janitor.Janitor,
 
-	_chargeValidators: { [string]: (self: Instance) -> boolean },
-	_startValidators: { [string]: (self: Instance) -> boolean },
-	_stopValidators: { [string]: (self: Instance) -> boolean },
-	_pauseValidators: { [string]: (self: Instance) -> boolean },
-	_resumeValidators: { [string]: (self: Instance) -> boolean },
-	_interruptValidators: { [string]: (self: Instance) -> boolean },
+	_tags: { [string]: boolean? },
+	_tagRuntimeContexts: { [keyof<Tags>]: { Client: boolean, Server: boolean } },
+	_tagValidators: { [keyof<Tags>]: { [string]: (self: Instance) -> boolean } },
 
-	stateChanged: signal.Signal<{ oldState: keyof<States>?, newState: keyof<States> }>,
+	_effectIds: { [string]: { id: string, name: string } },
+	_attributeSetIds: { [string]: { id: string, name: string } },
 }
--- ^ add more signals
+
+type PublicInstanceFields = {
+	read id: string,
+
+	read cd: AttributeComponent.Instance,
+	read duration: AttributeComponent.Instance,
+
+	read tagChanged: signal.Signal<{ tag: keyof<Tags>, state: "Added" | "Removed" }>,
+}
 
 export type Class<T = {}> = setmetatable<Fields & T, { __index: typeof(skill) }>
-export type Instance<T = {}> = setmetatable<InstanceFields & T, { __index: Class }>
+export type Instance<T = {}> = setmetatable<PublicInstanceFields & T, { __index: Class }>
 
-local _validate = function(self: Instance, validationStates: { keyof<States> }, validators: { [string]: (...any) -> boolean })
-	if sift.Array.has(validationStates, self._getState()) then return false end
-	for _, fn in validators do
-		if not fn(self) then return false end
-	end
-	return true
+type PrivateInstance<T = {}> = PrivateInstanceFields & Instance<T>
+
+local _validateTag = function(self: PrivateInstance, tag: keyof<Tags>, useValidators: boolean?): boolean
+	local runtimeContext = self._tagRuntimeContexts[tag] :: { [string]: boolean }
+	local validators = sift.Dictionary.values(self._tagValidators[tag])
+
+	local passed = true
+	if not useValidators then return passed end
+
+	if not runtimeContext[self.runContext :: string] then return false end
+	passed = sift.Array.every(validators, function(fn)
+		return fn(self)
+	end)
+
+	return passed
 end
 
-local _serverOnly = function<T>(fn: T)
-	return UtilityComponent:GetBasedOnRuntime(fn, function() end)
+local _addTag = function(self: PrivateInstance, tag: keyof<Tags>)
+	if self._tags["Locked"] then return end
+	if not _validateTag(self, tag, true) then return end
+	if self._tags[tag] then return end
+	self._tags[tag] = true
+	self.tagChanged:Fire({ tag = tag, state = "Added" })
 end
 
-local _validateCharge = function(self: Instance)
-	return _validate(self, { states.Charging }, self._chargeValidators)
+local _removeTag = function(self: PrivateInstance, tag: keyof<Tags>)
+	if not _validateTag(self, tag, false) then return end
+	if self._tags[tag] then return end
+	-- ^ maybe separate into another fn?
+
+	self._tags[tag] = nil
+	self.tagChanged:Fire({ tag = tag, state = "Removed" })
 end
 
-local _validateStart = function(self: Instance)
-	return _validate(self, { states.Starting }, self._startValidators)
+local _combatStateChange = function(self: PrivateInstance, serverFn, clientFn, currentTag, nextTag)
+	local selectedFunction = UtilityComponent:GetBasedOnRuntime(serverFn, clientFn)
+
+	self._currentThread:Start(function()
+		selectedFunction(self)
+		_removeTag(self, currentTag)
+		_addTag(self, nextTag)
+	end)
 end
 
-local _validateStop = function(self: Instance)
-	return _validate(self, { states.Ending }, self._stopValidators)
+local _chargingTag = function(self: PrivateInstance)
+	self._useTimer:Start(self.duration:Get())
+	_combatStateChange(self, self.onServerCharge, self.onClientCharge, tags.Charging, tags.Starting)
 end
 
-local _validatePause = function(self: Instance)
-	return _validate(self, { states.Charging, states.OnCD, states.Starting, states.Ending }, self._pauseValidators)
+local _startingTag = function(self: PrivateInstance)
+	_combatStateChange(self, self.onServerStart, self.onClientStart, tags.Starting, tags.Ending)
 end
 
-local _validateResume = function(self: Instance)
-	return _validate(self, { states.Paused }, self._resumeValidators)
+local _endingTag = function(self: PrivateInstance)
+	_combatStateChange(self, self.onServerStop, self.onClientStop, tags.Ending, tags.Idle)
 end
 
-local _validateInterrupt = function(self: Instance)
-	return _validate(self, { states.Starting, states.Charging, states.Ending }, self._interruptValidators)
-end
-
-local _setCD = function(self: Instance)
+local _idleTag = function(self: PrivateInstance)
 	self._useTimer:Stop()
+end
+
+local _cooldownTag = function(self: PrivateInstance)
+	self._cdTimer:Start(self.cd:Get())
+end
+
+local _lockTag = function() end
+
+local _interruptedTag = function(self: PrivateInstance)
+	_addTag(self, tags.Idle)
 	self._currentThread:Stop()
-	self._cdTimer:Start(self.cd)
 end
 
-local _interrupt = function(self: Instance)
-	if not _validateInterrupt(self) then return end
-	local selectedFunction = UtilityComponent:GetBasedOnRuntime(self.onServerInterrupt, self.onClientInterrupt)
-
-	self._setState(states.OnCD)
-	selectedFunction(self)
-end
-
-local _charge = function(self: Instance)
-	local selectedFunction = UtilityComponent:GetBasedOnRuntime(self.onServerCharge, self.onClientCharge)
-	if not _validateCharge(self) then return end
-
-	self._useTimer:Start(self.duration)
-
-	self._currentThread:Start(function()
-		selectedFunction(self)
-		if self:IsPaused() then self._currentThread:Pause() end
-		_serverOnly(self._setState)(states.Starting)
-	end)
-end
-
-local _start = function(self: Instance)
-	local selectedFunction = UtilityComponent:GetBasedOnRuntime(self.onServerStart, self.onClientStart)
-	if not _validateStart(self) then return end
-
-	self._currentThread:Start(function()
-		selectedFunction(self)
-		if self:IsPaused() then self._currentThread:Pause() end
-		_serverOnly(self._setState)(states.Ending)
-	end)
-end
-
-local _stop = function(self: Instance)
-	local selectedFunction = UtilityComponent:GetBasedOnRuntime(self.onServerStop, self.onClientStop)
-	if not _validateStop then return end
-
-	self._currentThread:Start(function()
-		selectedFunction(self)
-		if self:IsPaused() then self._currentThread:Pause() end
-		self._setState(states.OnCD)
-	end)
-end
-
-local _pause = function(self: Instance)
-	if not _validatePause(self) then return end
-
-	self._pausedState = self._getState()
-	self._useTimer:Pause()
-	self._cdTimer:Pause()
-	self._setState(states.Paused)
-end
-
-local _resume = function(self: Instance)
-	if not _validateResume(self) then return end
-	self._useTimer:Resume()
-	self._cdTimer:Resume()
-	self._currentThread:Resume()
-end
-
-local stateMap = {
-	[states.Charging] = _charge,
-	[states.Starting] = _start,
-	[states.Ending] = _stop,
-	[states.Idle] = nil,
-	[states.OnCD] = _setCD,
-	[states.Paused] = _pause,
-	[states.Resumed] = _resume,
+local _tagMap = {
+	[tags.Charging] = {
+		["Added"] = _chargingTag,
+	},
+	[tags.Starting] = {
+		["Added"] = _startingTag,
+	},
+	[tags.Ending] = {
+		["Added"] = _endingTag,
+	},
+	[tags.OnCD] = {
+		["Added"] = _cooldownTag,
+	},
+	[tags.Locked] = {},
+	[tags.Interrupted] = {
+		["Added"] = _interruptedTag,
+	},
 }
 
-function skill.constructor(name: string)
+type skillData = {
+	name: string,
+	cd: number,
+	duration: number?,
+}
+
+function skill.constructor(data: skillData)
 	local self = setmetatable({
-		name = name,
+		name = data.name,
+		runContext = UtilityComponent:GetRunContext(),
 	}, skill) :: Class
 
+	UtilityComponent:GetBasedOnRuntime(self.onServerConstruct, self.onClientConstruct)(self)
+
 	function self.new()
-		local object = setmetatable({}, { __index = self }) :: Instance
+		local object = setmetatable({
+			tagChanged = signal.new(),
+			cd = AttributeComponent.constructor(data.cd),
+			duration = AttributeComponent.constructor(data.duration or 0),
+		}, { __index = self }) :: PrivateInstance
 
-		object.stateChanged = signal.new()
+		UtilityComponent:GetBasedOnRuntime(self.onServerInstanceConstruct, self.onClientInstanceConstruct)(object)
 
-		object._getState, object._setState = charm.signal(states.Idle :: keyof<States>)
+		for _, tag in pairs(tags :: { [string]: keyof<Tags> }) do
+			object._tagValidators[tag] = {}
+		end
+
+		object._tagRuntimeContexts = {
+			[tags.Charging] = { Client = true, Server = true },
+			[tags.Ending] = { Client = false, Server = true },
+			[tags.Idle] = { Client = false, Server = true },
+			[tags.Interrupted] = { Client = true, Server = true },
+			[tags.OnCD] = { Client = false, Server = true },
+			[tags.Locked] = { Client = false, Server = true },
+			[tags.Starting] = { Client = false, Server = true },
+		}
 
 		object._janitor = janitor.new()
 		object._cdTimer = TimerComponent.constructor()
 		object._useTimer = TimerComponent.constructor()
 		object._currentThread = ThreadComponent.constructor()
 
-		object._janitor:Add(charm.listen(object._getState, function(state, previous)
-			object.stateChanged:Fire({ newState = state, oldState = previous })
-		end))
-
 		object._janitor:Add(object._cdTimer.finished:Connect(function()
-			object._setState(states.Idle)
+			_removeTag(object, tags.OnCD)
 		end))
 
 		object._janitor:Add(object._useTimer.finished:Connect(function()
-			object._setState(states.OnCD)
-			object._cdTimer:Start(self.duration)
+			_addTag(object, tags.OnCD)
 		end))
 
-		object._janitor:Add(object.stateChanged:Connect(function(data)
-			if stateMap[data.newState] then (stateMap[data.newState] :: () -> ())(object) end
+		object._janitor:Add(object.tagChanged:Connect(function(tagData)
+			local selectedTag = _tagMap[tagData.tag]
+			if not selectedTag then return end
+			if _tagMap[tagData.tag][tagData.state] then selectedTag[tagData.state](object) end
+			-- ^ i have no idea why it works like that
 		end))
 
 		return object
@@ -217,42 +213,88 @@ function skill.constructor(name: string)
 	return self
 end
 
+function skill.ChangeMigration(self: Instance, tag: keyof<Tags>, state: { Client: boolean, Server: boolean })
+	self = self :: PrivateInstance
+	self._tagRuntimeContexts[tag] = state
+end
+
+function skill.AddValidation(self: Instance, tag: keyof<Tags>, name: string, fn: (self: Instance) -> boolean)
+	self = self :: PrivateInstance
+	self._tagValidators[tag][name] = fn
+end
+
+function skill.RemoveValidation(self: Instance, tag: keyof<Tags>, name: string)
+	self = self :: PrivateInstance
+	self._tagValidators[tag][name] = nil
+end
+
+function skill.SetEffect(self: Instance, id: string, name: string)
+	self = self :: PrivateInstance
+	self._effectIds[id] = { id = id, name = name }
+end
+
+function skill.GetEffect(self: Instance, id: string)
+	self = self :: PrivateInstance
+	return self._effectIds[id]
+end
+
+function skill.GetEffects(self: Instance)
+	self = self :: PrivateInstance
+	return self._effectIds
+end
+
+function skill.SetAttributeSet(self: Instance, id: string, name: string)
+	self = self :: PrivateInstance
+	self._attributeSetIds[id] = { id = id, name = name }
+end
+
+function skill.GetAttributeSet(self: Instance, id: string)
+	self = self :: PrivateInstance
+	return self._attributeSetIds[id]
+end
+
 function skill.SetActorId(self: Instance, id: string)
+	self = self :: PrivateInstance
 	self._actorId = id
 end
 
 function skill.GetActorId(self: Instance)
+	self = self :: PrivateInstance
 	return self._actorId
 end
 
-function skill.IsPaused(self: Instance)
-	return self._getState() == states.Paused
-end
-
--- state change -> pause (not as method)
-function skill.Pause(self: Instance)
-	_serverOnly(self._setState)(states.Paused)
-end
-
-function skill.Resume(self: Instance)
-	_serverOnly(self._setState)(states.Resumed)
+function skill.GetTags(self: Instance)
+	self = self :: PrivateInstance
+	return self._tags
 end
 
 function skill.Interrupt(self: Instance)
-	_interrupt(self)
+	self = self :: PrivateInstance
+	_addTag(self, tags.Interrupted)
 end
 
 function skill.Start(self: Instance)
-	self._setState(states.Charging)
+	self = self :: PrivateInstance
+	_addTag(self, tags.Charging)
 end
 
-function skill.onServerInterrupt(self: Instance) end
-function skill.onClientInterrupt(self: Instance) end
-function skill.onServerCharge(self: Instance) end
-function skill.onClientCharge(self: Instance) end
-function skill.onServerStart(self: Instance) end
-function skill.onClientStart(self: Instance) end
-function skill.onServerStop(self: Instance) end
-function skill.onClientStop(self: Instance) end
+function skill.Cooldown(self: Instance)
+	self = self :: PrivateInstance
+	_addTag(self, tags.OnCD)
+end
+
+function skill.onServerConstruct<T>(self: T) end
+function skill.onServerInstanceConstruct<T>(self: T) end
+function skill.onServerInterrupt<T>(self: T) end
+function skill.onServerCharge<T>(self: T) end
+function skill.onServerStart<T>(self: T) end
+function skill.onServerStop<T>(self: T) end
+
+function skill.onClientConstruct<T>(self: T) end
+function skill.onClientInstanceConstruct<T>(self: T) end
+function skill.onClientInterrupt<T>(self: T) end
+function skill.onClientCharge<T>(self: T) end
+function skill.onClientStart<T>(self: T) end
+function skill.onClientStop<T>(self: T) end
 
 return skill

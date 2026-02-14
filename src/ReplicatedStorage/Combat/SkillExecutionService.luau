@@ -13,18 +13,9 @@ type StatesMap = { [string]: { state: string } }
 
 type Fields = {
 	_skills: { [string]: Skill.Instance },
-
-	_janitor: janitor.Janitor,
-
-	_setSkillStates: (states: StatesMap) -> (),
-	_getSkillStates: () -> StatesMap,
-
-	_replicateServerFunction: (player: Player, signals: any) -> (),
 }
 
--- ^ change from any
-
-type Class = setmetatable<Fields, { __index: typeof(service) }>
+export type Class = setmetatable<Fields, { __index: typeof(service) }>
 
 function service.constructor()
 	local self = setmetatable({
@@ -82,16 +73,6 @@ end
 
 function service.GetSkillById(self: Class, id: string)
 	return self._skills[id]
-end
-
-function service.StartSkill(self: Class, skill: Skill.Instance, actor: Actor.Instance)
-	assert(actor:GetSkillId(skill.id), `{actor.id} doesnt have a {skill.name} skill!`)
-	skill:Start()
-end
-
-function service.InterruptSkill(self: Class, skill: Skill.Instance, actor: Actor.Instance)
-	assert(actor:GetSkillId(skill.id), `{actor.id} doesnt have a {skill.name} skill!`)
-	skill:Interrupt()
 end
 
 return service :: Class

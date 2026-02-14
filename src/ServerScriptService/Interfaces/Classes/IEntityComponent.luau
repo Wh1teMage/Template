@@ -1,5 +1,5 @@
-export type Main<T=Main> = {
-    test: () -> string
+export type Main<T = Main> = {
+	test: () -> string,
 }
 
 return {}

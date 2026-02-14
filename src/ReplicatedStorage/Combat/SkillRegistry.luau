@@ -7,7 +7,7 @@ type Fields = {
 	_skills: { [string]: Skill.Class },
 }
 
-type Class = setmetatable<Fields, { __index: typeof(service) }>
+export type Class = setmetatable<Fields, { __index: typeof(service) }>
 
 function service.constructor()
 	local self = setmetatable({
@@ -17,9 +17,9 @@ function service.constructor()
 	return self
 end
 
-function service.RegisterSkill(self: Class, name: string)
-	local skillObject = Skill.constructor(name)
-	self._skills[name] = skillObject
+function service.RegisterSkill(self: Class, data)
+	local skillObject = Skill.constructor(data)
+	self._skills[data.name] = skillObject
 	return skillObject
 end
 

@@ -3,15 +3,15 @@ local gt = require("@Packages/greentea")
 local schemas = {}
 
 --@schema-remote
-schemas['Test3'] = gt.table({
-    data = gt.string(),
+schemas["Test3"] = gt.table({
+	data = gt.string(),
 })
 
 --@schema-remote
-schemas['Sync'] = gt.any()
+schemas["Sync"] = gt.any()
 
 --@schema-remote
-schemas['Hydrate'] = gt.any({allowNil = true})
+schemas["Hydrate"] = gt.any({ allowNil = true })
 
 return schemas
 

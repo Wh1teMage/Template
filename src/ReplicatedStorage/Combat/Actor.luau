@@ -1,4 +1,5 @@
 local sift = require("@Packages/sift")
+local UtilityComponent = require("@Utilities/Components/UtilityComponent")
 local actor = {}
 actor.__index = actor
 
@@ -9,7 +10,7 @@ type Fields = {
 type InstanceFields = {
 	id: string,
 	_skillIds: { [string]: { id: string, name: string } },
-	_statusIds: { [string]: { id: string, name: string } },
+	_effectIds: { [string]: { id: string, name: string } },
 	_attributeSetIds: { [string]: { id: string, name: string } },
 }
 
@@ -19,12 +20,12 @@ export type Instance<T = {}> = setmetatable<InstanceFields & T, { __index: Class
 function actor.constructor()
 	local self = setmetatable({}, actor) :: Class
 
-	self:onConstruct()
+	UtilityComponent:GetBasedOnRuntime(self.onServerConstruct, self.onClientConstruct)(self)
 
 	function self.new()
 		local object = setmetatable({}, { __index = self }) :: Instance
 
-		object:onInstanceConstruct()
+		UtilityComponent:GetBasedOnRuntime(self.onServerInstanceConstruct, self.onClientInstanceConstruct)(object)
 
 		return object
 	end
@@ -32,12 +33,16 @@ function actor.constructor()
 	return self
 end
 
-function actor.SetStatus(self: Instance, id: string, name: string)
-	self._statusIds[id] = { id = id, name = name }
+function actor.SetEffect(self: Instance, id: string, name: string)
+	self._effectIds[id] = { id = id, name = name }
 end
 
-function actor.GetStatus(self: Instance, id: string)
-	return self._statusIds[id]
+function actor.GetEffect(self: Instance, id: string)
+	return self._effectIds[id]
+end
+
+function actor.GetEffects(self: Instance)
+	return self._effectIds
 end
 
 function actor.SetAttributeSet(self: Instance, id: string, name: string)
@@ -60,7 +65,10 @@ function actor.GetSkillIds(self: Instance)
 	return sift.Dictionary.keys(self._skillIds)
 end
 
-function actor.onConstruct(self: Class) end
-function actor.onInstanceConstruct(self: Instance) end
+function actor.onServerConstruct<T>(self: T) end
+function actor.onServerInstanceConstruct<T>(self: T) end
+
+function actor.onClientConstruct<T>(self: T) end
+function actor.onClientInstanceConstruct<T>(self: T) end
 
 return actor

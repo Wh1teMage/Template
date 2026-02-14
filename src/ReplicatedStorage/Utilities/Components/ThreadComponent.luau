@@ -24,7 +24,7 @@ type Fields = {
 	finished: signal.Signal<>,
 
 	_getState: () -> keyof<States>,
-	_setState: () -> keyof<States>,
+	_setState: (keyof<States>) -> (),
 
 	_janitor: janitor.Janitor,
 	_currentThead: thread,
