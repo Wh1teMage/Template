@@ -1,4 +1,4 @@
-local Combat = require("@ReplicatedStorage/Combat")
+local Combat = require("../Combat")
 local types = require("@ReplicatedStorage/Combat/types")
 
 local actor = Combat:RegisterActor("Default")
@@ -13,11 +13,11 @@ type ModifiedInstance = types.ActorInstance<{
 	},
 }>
 
-function actor.onConstruct(self: ModifiedClass)
+function actor.onServerConstruct(self: ModifiedClass)
 	self.tag = "hi"
 end
 
-function actor.onInstanceConstruct(self: ModifiedInstance)
+function actor.onServerInstanceConstruct(self: ModifiedInstance)
 	self.stats = {
 		test = 123,
 	}

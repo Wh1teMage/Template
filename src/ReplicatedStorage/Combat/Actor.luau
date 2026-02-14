@@ -41,6 +41,10 @@ function actor.GetEffect(self: Instance, id: string)
 	return self._effectIds[id]
 end
 
+function actor.GetEffects(self: Instance)
+	return self._effectIds
+end
+
 function actor.SetAttributeSet(self: Instance, id: string, name: string)
 	self._attributeSetIds[id] = { id = id, name = name }
 end

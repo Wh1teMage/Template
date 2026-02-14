@@ -1,7 +1,10 @@
-local Combat = require("@ReplicatedStorage/Combat")
+local Combat = require("../Combat")
 local types = require("@ReplicatedStorage/Combat/types")
 
-local skill = Combat:RegisterSkill("Test")
+local skill = Combat:RegisterSkill({
+	name = "Test",
+	cd = 10,
+})
 
 type ModifiedInstance = types.SkillInstance
 

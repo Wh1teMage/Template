@@ -24,7 +24,7 @@ type Fields = {
 	finished: signal.Signal<>,
 
 	_getState: () -> keyof<States>,
-	_setState: () -> keyof<States>,
+	_setState: (state: keyof<States>) -> (),
 
 	_janitor: janitor.Janitor,
 	_startTime: number,
@@ -70,7 +70,7 @@ end
 function component.Start(self: Class, duration: number?)
 	if self._getState() ~= StatesEnum.Ended then return end
 
-	self._duration = duration or 1e6
+	self._duration = (duration and duration > 0) and duration or 1e6
 	self._passed = 0
 	self._startTime = os.clock()
 

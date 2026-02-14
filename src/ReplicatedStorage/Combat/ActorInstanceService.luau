@@ -8,7 +8,7 @@ type Fields = {
 	_actors: { [string]: Actor.Instance },
 }
 
-type Class = setmetatable<Fields, { __index: typeof(service) }>
+export type Class = setmetatable<Fields, { __index: typeof(service) }>
 
 function service.constructor()
 	local self = setmetatable({

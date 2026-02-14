@@ -2,6 +2,7 @@ local charm = require("@Packages/charm")
 local janitor = require("@Packages/janitor")
 local sift = require("@Packages/sift")
 local signal = require("@Packages/signal")
+local AttributeComponent = require("@Utilities/Components/AttributeComponent")
 local ThreadComponent = require("@Utilities/Components/ThreadComponent")
 local TimerComponent = require("@Utilities/Components/TimerComponent")
 local UtilityComponent = require("@Utilities/Components/UtilityComponent")
@@ -38,9 +39,9 @@ type States = {
 }
 
 type Fields = {
-	new: () -> Instance,
-	name: string,
-	type: keyof<EffectType>,
+	new: <T>(actor: T) -> Instance,
+	read name: string,
+	read type: keyof<EffectType>,
 }
 
 type PrivateInstanceFields = {
@@ -59,7 +60,7 @@ type InstanceFields<T = {}> = {
 	object: T,
 	effectType: keyof<EffectType>,
 
-	duration: number?,
+	read duration: AttributeComponent.Instance,
 
 	_janitor: janitor.Janitor,
 	_timer: TimerComponent.Class,
@@ -85,7 +86,7 @@ local startBasedOnType = {
 	[effectType.Duration] = function(self: Instance)
 		self:onStart()
 		self._currentThread:Start(function()
-			task.wait(self.duration or 5)
+			task.wait(self.duration:Get())
 			if self._getState() == states.Pause then self._currentThread:Pause() end
 			self._setState(states.Stop)
 		end)
@@ -158,9 +159,14 @@ local stateMap = {
 	end,
 }
 
-function effect.constructor(name: string)
+type effectData = {
+	name: string,
+	duration: number?,
+}
+
+function effect.constructor(data: effectData)
 	local self = setmetatable({
-		name = name,
+		name = data.name,
 	}, effect) :: Class
 
 	UtilityComponent:GetBasedOnRuntime(self.onServerConstruct, self.onClientConstruct)(self)
@@ -168,6 +174,7 @@ function effect.constructor(name: string)
 	function self.new<T>(parent: T)
 		local object = setmetatable({
 			object = parent,
+			duration = AttributeComponent.constructor(data.duration or 0),
 		}, { __index = self }) :: Instance
 
 		UtilityComponent:GetBasedOnRuntime(self.onServerInstanceConstruct, self.onClientInstanceConstruct)(object)
@@ -183,9 +190,9 @@ function effect.constructor(name: string)
 			object.stateChanged:Fire({ newState = state, oldState = previous })
 		end))
 
-		object.stateChanged:Connect(function(data)
-			if data.oldState == states.Resume then return end
-			if stateMap[data.newState] then stateMap[data.newState](object) end
+		object.stateChanged:Connect(function(stateData)
+			if stateData.oldState == states.Resume then return end
+			if stateMap[stateData.newState] then stateMap[stateData.newState](object) end
 		end)
 
 		return object
